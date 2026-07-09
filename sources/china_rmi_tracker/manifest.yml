@@ -6,11 +6,12 @@ description: >
 source_tier: 2
 citable: false          # GEM-authored: NEVER a [ref]; used to seed rows + prove out the schema
 
-format: custom          # a Google Sheet with a Data Dictionary tab + a Refineries tab
-adapter: adapter.py     # already on the full GEM schema; adapter mostly renames to canonical
+format: xlsx            # exported from the Google Sheet; the Refineries tab is already the GEM schema
 location:
-  # Google Sheet
+  # Google Sheet exported to xlsx; "Refineries" tab. Sibling tabs: Data Dictionary,
+  # "Extra facilities (out of scope)" (43 rows — a Phase-B scope signal), Capacity Conversion.
   drive_file_id: "1PyNUtGUDLdY1chJ-MkzzgV_OnAcNTp2QlIq8jLhStPw"
+  file_path: "data/china_independent_refinery_tracker.xlsx"   # gitignored; export before ingest
   sheet: "Refineries"
   header_row: 0
 

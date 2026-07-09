@@ -37,6 +37,7 @@ status_map:
   Idle:        "idle"
   Mothballed:  "mothballed"
   Shut:        "mothballed"
+  Closed:      "mothballed"   # judgment call: many EU "Closed" sites are permanent — revisit in scope pass
   Planned:     "proposed"
   "Under construction": "construction"
 

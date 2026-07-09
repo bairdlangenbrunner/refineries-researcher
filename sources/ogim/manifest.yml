@@ -1,38 +1,49 @@
 name: ogim
 description: >
-  OGIM v2.7 (Oil & Gas Infrastructure Mapping database) — refineries layer. GIS point
-  features; strongest for coordinate/location corroboration. Docs present locally; the
-  data layer (geopackage) still to be added.
+  OGIM v2.7 (Oil & Gas Infrastructure Mapping database) — Crude_Oil_Refineries layer, 692
+  point features. Strongest for coordinate/location corroboration; also carries BOTH design
+  capacity and throughput (the design-vs-throughput cross-check).
 source_tier: 2
-citable: false          # OGIM aggregates other sources; cite the upstream, not OGIM
+citable: false          # OGIM aggregates other sources; SRC_REF_ID points into its own registry, not URLs
 
-format: gpkg            # or geojson once the refineries layer is extracted
+format: gpkg
 location:
-  # Docs only, for now:
-  file_path: "/Users/baird/Dropbox/_gis-data/ogim/"     # README_OGIM_v2.7_20250328.pdf + Data_Source_References.pdf
-  # TODO: point at the actual OGIM_v2.7.gpkg refineries layer once downloaded, e.g.
-  #   file_path: "data/OGIM_v2.7.gpkg"
-  #   layer: "Refineries"     (confirm exact layer name from the README)
+  file_path: "/Users/baird/Dropbox/_gis-data/ogim/OGIM_v2.7.gpkg"   # 3 GB multi-layer gpkg (gitignored; read single layer)
+  layer: "Crude_Oil_Refineries"                                      # 692 features; siblings: LNG_Facilities, Petroleum_Terminals
 
-id_field: "OGIM_ID"     # confirm against the README's schema
+id_field: "OGIM_ID"
 
-# Fill from the OGIM refineries-layer attribute table (see README/Data_Source_References):
+# Confirmed against OGIM_v2.7.gpkg schema (Crude_Oil_Refineries layer):
 column_map:
   source_id:      "OGIM_ID"
   name:           "FAC_NAME"
   country:        "COUNTRY"
+  subnational:    "STATE_PROV"
   latitude:       "LATITUDE"
   longitude:      "LONGITUDE"
-  capacity_value: "REFIN_CAP"     # confirm the exact capacity column + units from the README
-  status:         "FAC_STATUS"
-  source_url:     "SRC_REF_ID"    # OGIM references its own source-reference table, not URLs
+  capacity_value: "LIQ_CAPACITY_BPD"     # design/nameplate capacity, barrels/day
+  status:         "OGIM_STATUS"          # also FAC_STATUS; both carry many "N/A"
+  owner:          "OPERATOR"
+  start_year:     "INSTALL_DATE"         # date string; ingest/adapter parses the year
+  source_url:     "SRC_REF_ID"           # an ID into OGIM's Data_Catalog, NOT a URL — never a direct [ref]
 
-capacity_units: "bpd"   # CONFIRM from README before trusting
+capacity_units: "bpd"
 
-status_map: {}          # populate once the FAC_STATUS vocabulary is read from the README
+# OGIM_STATUS profiled at ingest: N/A 548, OPERATIONAL 141, OTHER 2, INACTIVE 1 (of 692).
+# 79% "N/A" — so OGIM is a LOCATION source, not a status source; blank out the non-signal.
+status_map:
+  OPERATIONAL: "operating"
+  INACTIVE:    "idle"
+  "N/A":       null      # unknown — leave status blank rather than assert
+  OTHER:       null
+
+# INSTALL_DATE is 1900-01-01 for 680/692 rows (unknown-date placeholder) — null it.
+start_year_sentinels: [1900]
 
 notes: >
-  Placeholder column names — VERIFY every one against OGIM_v2.7 README + Data_Source_
-  References before ingesting. OGIM is an aggregator: its SRC_REF_ID points into its own
-  reference registry, so treat OGIM as corroboration for LOCATION primarily; chase the
-  named upstream source for capacity/status citations.
+  Also present but NOT in the canonical schema: LIQ_THROUGHPUT_BPD (throughput basis —
+  keep for the Phase B design-vs-throughput comparison), COMMODITY, FAC_TYPE, CATEGORY,
+  ON_OFFSHORE, NUM_STORAGE_TANKS. CATEGORY/COMMODITY/FAC_TYPE are useful SCOPE signals.
+  SRC_REF_ID resolves against OGIM's Data_Catalog layer / Data_Source_References PDF — so
+  OGIM is corroboration for LOCATION; chase the named upstream source for citations.
+  Names are UPPERCASE (e.g. GHAZANFAR OIL REFINERY) — normalize case in the matcher.

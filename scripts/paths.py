@@ -50,13 +50,24 @@ SCHEMA: list[tuple[str, str | None]] = [
     ("rmi_refine_id", None),
     ("ogj_id", None),
     ("ogim_id", None),
+    ("china_id", None),
     ("SourcesPresent", None),
+    ("InScope", None),          # superset-first: yes | no | unknown (default at build)
+    ("ScopeReason", None),      # why in/out of scope, filled by the separate scope pass
     ("Wiki", None),
     ("Notes1", None),
     ("Notes2", None),
     ("Notes3", None),
     ("Notes4", None),
 ]
+
+# Per-source crosswalk id column on the master (source name -> master column)
+SOURCE_ID_COLUMN = {
+    "rmi": "rmi_refine_id",
+    "ogj": "ogj_id",
+    "ogim": "ogim_id",
+    "china_rmi_tracker": "china_id",
+}
 
 STATUS_VOCAB = [
     "proposed", "construction", "operating", "idle",

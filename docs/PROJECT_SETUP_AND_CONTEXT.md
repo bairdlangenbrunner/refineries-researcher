@@ -52,7 +52,18 @@ Baird applies by hand.
 
 - ✅ Repo scaffold, schema, controlled vocab, capacity conversions, source registry + 4
   manifests, ingest engine, OGJ adapter.
-- ⛏ `match.py` / `merge.py` / `entity_lookup.py` / `url_verifier.py` /
-  `build_review_package.py` — skeletons to port from the sibling repos.
-- ☐ Download raw sources locally and run the first ingest.
-- ☐ First master build + review.
+- ✅ **A1–A2 ingest**: all 4 sources → `sources/<name>/canonical.parquet` (rmi 484, ogim 692,
+  ogj 127 Europe-only, china_rmi_tracker 101). Sentinel handling: capacity `<=0` (RMI `0`,
+  OGIM `-999`) and OGIM's `1900` start-year placeholder null out; `tttpa`→kbpd verified.
+- ✅ **A3 build**: `match.py` (cKDTree coord-blocking + name/haversine/capacity scoring) and
+  `merge.py` (union-find with same-source guard) built; `country_normalize.py` added.
+  First union master: **1404 → 1060 rows**, 293 multi-source, 193 conflicts, IDs `R####` with
+  `data/id_crosswalk.json`. Every row `InScope=unknown` (superset-first; scope is Phase B).
+- ⛏ `entity_lookup.py` / `url_verifier.py` / `build_review_package.py` — still skeletons.
+- ☐ **A4 dedup follow-ups**: (1) China under-merge — 196 China rows; china↔rmi matched only 8
+  despite the tracker's `Is_In_RMI_20230508` flag → use the flag + looser China blocking.
+  (2) 55 country-less OGJ-Europe rows → reverse-geocode Country/ISO3 from coords.
+  (3) Register the **worldwide OGJ** (WW Refining PDF, ~700) as its own source; current `ogj` is Europe-only.
+  (4) Review the 271 `possible` pairs (`data/master_*.possible.parquet`) to tune thresholds.
+- ☐ **Phase B scope pass**: set `InScope`/`ScopeReason` per the open scope-boundary decisions above.
+- ☐ First reviewable batch xlsx (needs `build_review_package.py`).

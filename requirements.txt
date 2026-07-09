@@ -14,3 +14,4 @@ pdfplumber>=0.10       # url_verifier PDF text extraction
 
 # Dev
 pytest>=8.0
+pycountry

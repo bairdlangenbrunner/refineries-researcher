@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -90,12 +91,25 @@ def generic_load(manifest: dict, raw: Path) -> list[dict]:
     return rows
 
 
+def _to_year(value, sentinels: set[int]):
+    """Extract a 4-digit start year from a date string / number; drop sentinel years
+    (e.g. OGIM's 1900-01-01 unknown-date placeholder — 680/692 rows)."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    m = re.search(r"(1[89]\d{2}|20\d{2})", str(value))
+    if not m:
+        return None
+    year = int(m.group(1))
+    return None if year in sentinels else year
+
+
 def finalize(rows: list[dict], manifest: dict) -> "pd.DataFrame":
     name = manifest["name"]
     tier = manifest.get("source_tier")
     status_map = {k.lower(): v for k, v in (manifest.get("status_map") or {}).items()}
     config_map = {str(k): v for k, v in (manifest.get("configuration_map") or {}).items()}
     default_units = manifest.get("capacity_units")
+    year_sentinels = {int(y) for y in (manifest.get("start_year_sentinels") or [1900])}
 
     out = []
     for row in rows:
@@ -107,6 +121,8 @@ def finalize(rows: list[dict], manifest: dict) -> "pd.DataFrame":
             rec["status"] = status_map.get(str(rec["status"]).strip().lower(), rec["status"])
         if rec.get("configuration") is not None:
             rec["configuration"] = config_map.get(str(rec["configuration"]).strip(), rec["configuration"])
+        # start_year -> integer year, sentinel-nulled
+        rec["start_year"] = _to_year(rec.get("start_year"), year_sentinels)
         # capacity normalization
         units = rec.get("capacity_units") or default_units
         rec["capacity_units"] = units

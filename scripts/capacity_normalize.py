@@ -49,14 +49,18 @@ def canonical_unit(units: str) -> str:
 
 
 def to_kbpd(value: float | None, units: str) -> float | None:
-    """Convert a capacity value in `units` to kbpd. None/0 -> None (0 == unknown sentinel)."""
+    """Convert a capacity value in `units` to kbpd. None or <=0 -> None.
+
+    Capacity is strictly positive, so any non-positive value is an unknown/idle
+    sentinel, not a real 0 kbpd: RMI uses 0, OGIM uses -999.
+    """
     if value is None:
         return None
     try:
         v = float(value)
     except (TypeError, ValueError):
         return None
-    if v == 0:                      # RMI et al. use 0 for unknown/idle; not a real 0 kbpd
+    if v <= 0:                      # 0 (RMI) / -999 (OGIM) etc. == unknown/idle sentinel
         return None
     return round(v * _TO_KBPD[canonical_unit(units)], 3)
 
