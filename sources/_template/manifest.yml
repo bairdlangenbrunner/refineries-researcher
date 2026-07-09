@@ -1,0 +1,44 @@
+name: TEMPLATE                 # must match the directory name
+description: >
+  One-line description of what this dataset is and what it's good for.
+source_tier: 2                # 1 primary/regulatory | 2 industry-standard | 3 weak/community
+citable: false               # may the source's own URLs seed a GEM [ref] (after re-verify)? GEM-authored => false
+
+format: xlsx                 # xlsx | csv | geojson | gpkg | json | pdf | custom
+adapter:                     # optional: adapter.py with parse() for nonstandard formats
+location:
+  file_path: "data/<file>"   # one of file_path / drive_file_id / url / sibling_path
+  drive_file_id:
+  url:
+  sibling_path:
+  sheet:                     # xlsx tab name
+  header_row: 0              # 0-based header row index
+
+id_field: "<source primary key column>"
+
+# canonical_field: source_column  (see _schema/canonical_record.md for the field list)
+column_map:
+  source_id:      ""
+  name:           ""
+  country:        ""
+  iso3:           ""
+  subnational:    ""
+  city:           ""
+  latitude:       ""
+  longitude:      ""
+  capacity_value: ""
+  capacity_units: ""         # omit if using the top-level `capacity_units` default
+  status:         ""
+  owner:          ""
+  configuration:  ""
+  start_year:     ""
+  source_url:     ""
+
+capacity_units:              # default units if the source has no per-row units column
+
+status_map: {}               # source status value -> controlled Status vocab
+configuration_map: {}        # source config value -> controlled Configuration vocab
+
+notes: >
+  Gotchas: unit traps, sentinel values (0 == unknown?), coordinate order, which
+  year/edition to take, columns to verify against the source's own docs.

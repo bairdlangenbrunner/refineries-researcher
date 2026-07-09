@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Refinery background-source manifest",
+  "type": "object",
+  "required": ["name", "source_tier", "format", "column_map"],
+  "properties": {
+    "name": { "type": "string", "description": "Registry key, matches the sources/<name>/ dir." },
+    "description": { "type": "string" },
+    "source_tier": { "type": "integer", "minimum": 1, "maximum": 3,
+      "description": "1 = primary/regulatory, 2 = industry-standard dataset, 3 = weak/community." },
+    "citable": { "type": "boolean", "default": false,
+      "description": "Whether the source's own URLs may seed a GEM [ref] (still re-verified). GEM-authored datasets: false." },
+    "format": { "type": "string", "enum": ["xlsx", "csv", "geojson", "gpkg", "json", "pdf", "custom"] },
+    "location": {
+      "type": "object",
+      "description": "Where the raw data lives. One of file_path / drive_file_id / url / sibling_path.",
+      "properties": {
+        "file_path": { "type": "string" },
+        "drive_file_id": { "type": "string" },
+        "url": { "type": "string" },
+        "sibling_path": { "type": "string", "description": "Path relative to the gem repos root, e.g. ../refineries-tracker/refineries.json" },
+        "sheet": { "type": "string", "description": "Sheet/tab name for xlsx." },
+        "header_row": { "type": "integer", "description": "0-based header row index." }
+      }
+    },
+    "id_field": { "type": "string", "description": "Source column that is its stable primary key." },
+    "column_map": {
+      "type": "object",
+      "description": "canonical_field -> source_column_name (or a dotted path for nested json).",
+      "additionalProperties": { "type": "string" }
+    },
+    "capacity_units": { "type": "string",
+      "description": "Default units for the capacity column if the source doesn't carry a units column (e.g. 'bpd' for RMI)." },
+    "status_map": {
+      "type": "object",
+      "description": "source status value -> controlled Status vocab value.",
+      "additionalProperties": { "type": "string" }
+    },
+    "configuration_map": {
+      "type": "object",
+      "description": "source config code/value -> controlled Configuration vocab value (e.g. H -> hydroskimming).",
+      "additionalProperties": { "type": "string" }
+    },
+    "adapter": { "type": "string",
+      "description": "Optional python module (adapter.py) with a parse() for custom formats." },
+    "notes": { "type": "string" }
+  }
+}

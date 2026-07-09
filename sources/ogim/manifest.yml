@@ -1,0 +1,38 @@
+name: ogim
+description: >
+  OGIM v2.7 (Oil & Gas Infrastructure Mapping database) — refineries layer. GIS point
+  features; strongest for coordinate/location corroboration. Docs present locally; the
+  data layer (geopackage) still to be added.
+source_tier: 2
+citable: false          # OGIM aggregates other sources; cite the upstream, not OGIM
+
+format: gpkg            # or geojson once the refineries layer is extracted
+location:
+  # Docs only, for now:
+  file_path: "/Users/baird/Dropbox/_gis-data/ogim/"     # README_OGIM_v2.7_20250328.pdf + Data_Source_References.pdf
+  # TODO: point at the actual OGIM_v2.7.gpkg refineries layer once downloaded, e.g.
+  #   file_path: "data/OGIM_v2.7.gpkg"
+  #   layer: "Refineries"     (confirm exact layer name from the README)
+
+id_field: "OGIM_ID"     # confirm against the README's schema
+
+# Fill from the OGIM refineries-layer attribute table (see README/Data_Source_References):
+column_map:
+  source_id:      "OGIM_ID"
+  name:           "FAC_NAME"
+  country:        "COUNTRY"
+  latitude:       "LATITUDE"
+  longitude:      "LONGITUDE"
+  capacity_value: "REFIN_CAP"     # confirm the exact capacity column + units from the README
+  status:         "FAC_STATUS"
+  source_url:     "SRC_REF_ID"    # OGIM references its own source-reference table, not URLs
+
+capacity_units: "bpd"   # CONFIRM from README before trusting
+
+status_map: {}          # populate once the FAC_STATUS vocabulary is read from the README
+
+notes: >
+  Placeholder column names — VERIFY every one against OGIM_v2.7 README + Data_Source_
+  References before ingesting. OGIM is an aggregator: its SRC_REF_ID points into its own
+  reference registry, so treat OGIM as corroboration for LOCATION primarily; chase the
+  named upstream source for capacity/status citations.

@@ -1,0 +1,50 @@
+# Controlled vocabulary
+
+Locked value sets for the enumerated columns. Copy casing exactly; don't invent values.
+New values require a Baird decision — record the ruling here when made.
+
+## `Status` (lowercase)
+
+Lifecycle of the refinery. Distinct from the LNG/pipeline trackers only in that refineries
+add `idle`/`mothballed` for temporary shutdowns.
+
+| Value | Meaning |
+|---|---|
+| `proposed` | Announced/planned; no construction. |
+| `construction` | Under construction. |
+| `operating` | In operation (incl. partial). |
+| `idle` | Temporarily shut, expected to restart. |
+| `mothballed` | Indefinitely shut, preserved, could restart. |
+| `retired` | Permanently closed. |
+| `shelved` | Development paused indefinitely (pre-construction). |
+| `cancelled` | Project abandoned; will not be built. |
+
+> The China tracker used only `operating`/`mothballed`/`retired` (existing plants). The
+> worldwide tracker covers the full pipeline, so `proposed`/`construction`/`shelved`/
+> `cancelled` are in play for new-build research.
+
+## `Configuration` (lowercase)
+
+Process complexity, simplest → most complex:
+
+| Value | Meaning | RMI code |
+|---|---|---|
+| `topping` | Atmospheric distillation only (+ maybe naphtha reforming). | *(none)* |
+| `hydroskimming` | Topping + reforming + hydrotreating; no conversion units. | `H` |
+| `medium conversion` | Adds catalytic/thermal cracking (FCC/coker). | `M` |
+| `deep conversion` | Adds hydrocracking/full residue conversion. | `D` |
+
+RMI's `Refinery Type` column uses single letters **H / M / D** → map as above. RMI has no
+`topping` code; a genuine topping plant identified in research is `topping`.
+
+## `Accuracy` (lowercase)
+
+Coordinate precision: `exact` | `approximate`.
+
+## Scope-boundary rulings (append as decided)
+
+Log here every ambiguous inclusion/exclusion ruling so it's consistent across batches
+(see CLAUDE.md "Scope of the database"). Format: `<date> — <case> — <ruling> — <rationale>`.
+
+- _(none yet — greenfield; e.g. condensate splitters, topping/mini plants, mothballed-then-
+  demolished, associated-vs-standalone petrochem all need rulings as they arise)_

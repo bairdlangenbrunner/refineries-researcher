@@ -1,0 +1,46 @@
+name: ogj
+description: >
+  Oil & Gas Journal Worldwide Refining survey. Industry-standard annual dataset. Two
+  artifacts: a year-keyed interactive-map JSON export, and the WW Refining PDF + an
+  extraction notebook. Carries capacity in BOTH kbbl/cd and Mt/a — useful for the
+  tonnes<->barrels cross-check.
+source_tier: 2
+citable: true           # OGJ is a real publication; still re-verify each value/URL before staging
+
+format: json            # the map JSON; the PDF path is a fallback via adapter
+adapter: adapter.py     # map JSON is a nonstandard {year: {map: [ {B:..,F:..,H:..,K:..,name,position} ]}} shape
+location:
+  sibling_path: "../refineries-tracker/refineries.json"     # year-keyed map export
+  # PDF fallback: ../refineries-tracker/refineries-data-230100OGJ_WWRefining___.63d818a0b093b.pdf
+  #   + extraction notebook ../refineries-tracker/extract-refineries-from-PDF-table.ipynb
+
+id_field: "id"          # the map JSON gives each point a short id (e.g. "ayuwnn")
+
+# Map JSON per-point keys are letter-coded; the adapter resolves them:
+#   B -> "Owners: <x>"   F -> "Primary capacity(kbbl/cd): <x>"
+#   H -> "Primary capacity(Mt/a): <x>"   K -> "Status: <x>"
+#   name, position:[lat,lon], active
+column_map:
+  source_id:      "id"
+  name:           "name"
+  owner:          "B"
+  capacity_value: "F"          # kbbl/cd == kbpd
+  status:         "K"
+  latitude:       "position.0"
+  longitude:      "position.1"
+
+capacity_units: "kbpd"         # F is already kbbl/cd; adapter also records the Mt/a value for the cross-check
+
+status_map:
+  Operational: "operating"
+  Operating:   "operating"
+  Idle:        "idle"
+  Mothballed:  "mothballed"
+  Shut:        "mothballed"
+  Planned:     "proposed"
+  "Under construction": "construction"
+
+notes: >
+  Take the LATEST year block in the JSON unless told otherwise. position is [lat, lon]
+  (NOT WKT lon-first). The Mt/a value (key H) should equal F/20.08 — a large mismatch
+  flags a source typo; the adapter emits both so match.py can catch it.

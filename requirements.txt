@@ -1,0 +1,16 @@
+# Core
+pandas>=2.0
+pyyaml>=6.0
+openpyxl>=3.1          # xlsx read (ingest) + write (build_review_package)
+pyarrow>=14.0          # parquet
+
+# Source parsing
+json5>=0.9             # OGJ map-JSON adapter (JS-object literal)
+geopandas>=0.14        # OGIM GIS layer (optional; ingest imports lazily)
+
+# Research / verification
+requests>=2.31
+pdfplumber>=0.10       # url_verifier PDF text extraction
+
+# Dev
+pytest>=8.0

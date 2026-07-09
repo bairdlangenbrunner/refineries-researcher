@@ -1,0 +1,33 @@
+# Raw source downloads — recipe is committed (manifests), bytes are not
+data/*.xlsx
+data/*.csv
+data/*.gpkg
+data/*.geojson
+data/*.pdf
+sources/**/data/
+sources/**/canonical.parquet
+# but keep the audit summaries:
+!sources/**/canonical_summary.json
+
+# Master (large; regenerated) — decide per-repo whether to commit a snapshot
+data/master_*.parquet
+
+# Batch deliverables + staging derived artifacts (agent-authored staging JSON IS committed)
+batches/*.xlsx
+batches/staging/**/*.parquet
+batches/staging/**/derived/
+
+# Env / secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+build/
+dist/
+*.egg-info/
+
+# OS
+.DS_Store

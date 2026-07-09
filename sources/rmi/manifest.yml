@@ -1,0 +1,45 @@
+name: rmi
+description: >
+  RMI Refinery List (February '23) — ~800 crude-oil refineries worldwide. Primary global
+  seed for the greenfield build. One flat sheet, one row per refinery.
+source_tier: 2
+citable: false          # RMI's own Typology Source cells are often abarrelfull.wikidot.com; re-verify everything
+
+format: xlsx
+location:
+  # Drive: folder 1gJaJ7KYByNAHzoF0ve6ienuEvsfP28bV
+  drive_file_id: "15CoiFuiT-JtDD-cb3ZV-Cx_Qb8RUPiDk"   # "Copy of RMI Refinery List (February '23).xlsx"
+  file_path: "data/rmi_refinery_list_feb2023.xlsx"      # download here (gitignored) before ingest
+  sheet: "RefineryList"
+  header_row: 0
+
+id_field: "rmi_refine_id"
+
+# canonical_field: source_column
+column_map:
+  source_id:      "rmi_refine_id"
+  name:           "Name"
+  capacity_value: "Design Capacity (bbl/day)"
+  country:        "Country"
+  subnational:    "State"
+  latitude:       "Latitude"
+  longitude:      "Longitude"
+  iso3:           "iso 3 letter code"
+  configuration:  "Refinery Type"
+  source_url:     "Typology Source"
+  # "location" column is WKT POINT(lon lat) — redundant with lat/lon; ignored on ingest.
+
+capacity_units: "bpd"     # RMI "Design Capacity (bbl/day)" is barrels/day
+
+configuration_map:
+  H: "hydroskimming"
+  M: "medium conversion"
+  D: "deep conversion"
+
+# RMI has no status column — all rows ingest with status null; status is researched later.
+# A capacity of 0 in RMI means unknown/idle (e.g. Aruba, Azerineftyag) — treat as null, flag.
+
+notes: >
+  Design capacity is nameplate, not throughput. Capacity==0 → treat as unknown (do not
+  record 0 kbpd); flag for status research (often idle/mothballed). Many Typology Source
+  URLs are abarrelfull.wikidot.com — provenance only, never a citation.

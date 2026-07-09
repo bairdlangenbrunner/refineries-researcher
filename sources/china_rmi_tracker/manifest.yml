@@ -1,0 +1,50 @@
+name: china_rmi_tracker
+description: >
+  GEM's own "China Independent Oil Refinery Tracker for RMI". This is the SCHEMA TEMPLATE
+  the whole project's gem_schema.md is derived from, and it is China seed data. Because it
+  is GEM-authored it is SEED ONLY — never a citation.
+source_tier: 2
+citable: false          # GEM-authored: NEVER a [ref]; used to seed rows + prove out the schema
+
+format: custom          # a Google Sheet with a Data Dictionary tab + a Refineries tab
+adapter: adapter.py     # already on the full GEM schema; adapter mostly renames to canonical
+location:
+  # Google Sheet
+  drive_file_id: "1PyNUtGUDLdY1chJ-MkzzgV_OnAcNTp2QlIq8jLhStPw"
+  sheet: "Refineries"
+  header_row: 0
+
+id_field: "RefineryID"
+
+# Already close to the GEM schema; map its columns straight to canonical:
+column_map:
+  source_id:      "RefineryID"
+  name:           "RefineryName"
+  status:         "Status"
+  owner:          "Owner"
+  capacity_value: "Capacity"
+  capacity_units: "CapacityUnits"     # NOTE: values like "tttpa" == 万吨/a (10,000 t/yr) — see capacity_units.md
+  configuration:  "Configuration"
+  start_year:     "StartYear"
+  city:           "City"
+  subnational:    "Province"
+  latitude:       "Latitude"
+  longitude:      "Longitude"
+
+status_map:
+  Operating:   "operating"
+  Operational: "operating"
+  Mothballed:  "mothballed"
+  Retired:     "retired"
+
+configuration_map:
+  "hydroskimming":     "hydroskimming"
+  "medium conversion": "medium conversion"
+  "deep conversion":   "deep conversion"
+
+notes: >
+  The `CapacityInKbpd` in this tracker already resolves the 万吨/tttpa unit (750 tttpa =
+  150.75 kbpd = 7.5 Mt/a). Keep the tracker's own kbpd as a cross-check but re-derive via
+  capacity_normalize.py. `Is_In_RMI_20230508` flags overlap with RMI — use it to pre-link
+  china_rmi_tracker rows to rmi rows during merge. Chinese names/ownership columns exist
+  in the source; ingest drops them (worldwide schema is English-only).
