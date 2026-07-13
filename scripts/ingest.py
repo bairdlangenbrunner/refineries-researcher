@@ -151,8 +151,11 @@ def main() -> None:
     raw = resolve_raw_path(manifest)
     print(f"ingest {args.source}: {raw}")
 
+    excluded = []
     if manifest.get("adapter"):
-        rows = load_adapter(args.source).parse(manifest, str(raw))
+        parse = load_adapter(args.source).parse
+        rows = parse(manifest, str(raw))
+        excluded = list(getattr(parse, "excluded", []) or [])   # scope-dropped rows to surface
     else:
         rows = generic_load(manifest, raw)
 
@@ -167,9 +170,15 @@ def main() -> None:
         "with_capacity_kbpd": int(df["capacity_kbpd"].notna().sum()),
         "fill_rate": {c: round(float(df[c].notna().mean()), 3) for c in CANONICAL_FIELDS},
     }
+    if excluded:
+        summary["excluded_out_of_scope"] = excluded
     (SOURCES / args.source / "canonical_summary.json").write_text(json.dumps(summary, indent=2))
     print(f"  -> {out}  ({len(df)} rows)")
     print(f"  -> canonical_summary.json")
+    if excluded:
+        print(f"  ! excluded {len(excluded)} out-of-scope site(s) (no crude distillation):")
+        for e in excluded:
+            print(f"      - {e.get('company')} | {e.get('site')}, {e.get('state')}")
 
 
 if __name__ == "__main__":

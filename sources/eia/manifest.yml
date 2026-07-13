@@ -1,0 +1,41 @@
+name: eia
+description: >
+  U.S. EIA Refinery Capacity Report (Form EIA-820) — the per-refinery workbook
+  refcap{YY}.xlsx, data as of Jan 1 of the edition year. US-only, ~124 crude refineries.
+  A PRIMARY U.S.-government source and the gold standard for U.S. atmospheric-crude-
+  distillation capacity, operator, site/PADD/state, operable-vs-idle status, and the full
+  downstream-unit slate. Coordinates are joined from the EIA US Energy Atlas GIS layer.
+source_tier: 1          # primary U.S.-government source
+citable: true           # EIA is federal public domain and NOT a GEM surface; re-verify each value/URL
+
+format: xlsx            # long/tidy per-refinery workbook — needs the adapter's pivot, not a column_map
+adapter: adapter.py     # pivots (refinery x PRODUCT x SUPPLY) rows + left-joins GIS coords
+location:
+  url: "https://www.eia.gov/petroleum/refinerycapacity/refcap26.xlsx"   # naming: refcap{YY}.xlsx
+  file_path: "sources/eia/data/refcap26.xlsx"                            # gitignored; re-download to refresh
+  # Coordinates (Latitude/Longitude only) from the EIA US Energy Atlas "Petroleum Refineries"
+  # shapefile. Lags the workbook (2021 vintage) so a few sites won't join -> coords null.
+  coords_url: "https://www.eia.gov/maps/map_data/Petroleum_Refineries_US_EIA.zip"
+  coords_path: "sources/eia/data/Petroleum_Refineries_US_EIA.zip"
+
+id_field: "source_id"   # adapter synthesizes deterministic EIA-<ST>-NN ids (per-state sequence)
+
+# The adapter emits canonical fields directly. Crude capacity = TOTAL OPERABLE CAPACITY
+# atmospheric-crude-distillation b/cd (whole barrels -> ingest normalizes to kbpd). Status is
+# DERIVED from the OPERATING/IDLE/TOTAL-OPERABLE PRODUCT trio ('operating'/'idle', controlled
+# vocab), so no status_map is needed.
+capacity_units: "bpd"
+
+notes: >
+  ⚠ SCOPE: the report includes a few downstream-only complexes (petrochemical/lube/NGL:
+  Equistar Channelview, Excel Paralubes, Trecora, Pasadena Performance, Enterprise & Targa
+  Mont Belvieu) that report cracking/alkylation/desulf units but NO atmospheric crude
+  distillation — out of scope for a crude-refinery tracker. The adapter EXCLUDES them and
+  records each in a `excluded` list surfaced by ingest (not silently dropped). "TOTAL
+  OPERABLE" = "OPERATING" + "IDLE"; use TOTAL OPERABLE for headline capacity, derive status
+  from whether OPERATING > 0. Both b/cd and b/sd are present as separate SUPPLY rows — GEM
+  wants b/cd. EIA's own labels have a typo ('barrels per steam day') on some current-year
+  rows, so SUPPLY is matched by `contains`, not equality. Unlike irs_rcn this IS a mergeable
+  source (has capacity + coords). Coordinate vintage lags capacity vintage — when two
+  refineries share a city the GIS join disambiguates by operator-name + capacity closeness;
+  where it can't, coords are left null rather than guessed.

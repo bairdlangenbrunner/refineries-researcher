@@ -1,0 +1,88 @@
+{
+  "source": "eia",
+  "rows": 124,
+  "with_coords": 120,
+  "with_capacity_kbpd": 124,
+  "fill_rate": {
+    "source": 1.0,
+    "source_id": 1.0,
+    "name": 1.0,
+    "country": 1.0,
+    "iso3": 1.0,
+    "subnational": 1.0,
+    "city": 1.0,
+    "latitude": 0.968,
+    "longitude": 0.968,
+    "capacity_value": 1.0,
+    "capacity_units": 1.0,
+    "capacity_kbpd": 1.0,
+    "status": 1.0,
+    "owner": 1.0,
+    "configuration": 0.0,
+    "start_year": 0.0,
+    "source_url": 1.0,
+    "source_tier": 1.0
+  },
+  "excluded_out_of_scope": [
+    {
+      "company": "EQUISTAR CHEMICALS LP",
+      "site": "CHANNELVIEW",
+      "state": "Texas",
+      "reason": "no atmospheric crude distillation capacity",
+      "units": [
+        "ALKYLATES"
+      ]
+    },
+    {
+      "company": "ENTERPRISE PROD TEXAS OPERATING LLC",
+      "site": "MONT BELVIEU",
+      "state": "Texas",
+      "reason": "no atmospheric crude distillation capacity",
+      "units": [
+        "DESULFURIZATION, OTHER"
+      ]
+    },
+    {
+      "company": "EXCEL PARALUBES",
+      "site": "WESTLAKE",
+      "state": "Louisiana",
+      "reason": "no atmospheric crude distillation capacity",
+      "units": [
+        "CAT HYDROCRACKING, GAS OIL",
+        "LUBRICANTS",
+        "SULFUR (SHORT TONS/DAY)"
+      ]
+    },
+    {
+      "company": "PASADENA PERFORMANCE PRODUCTS LLC",
+      "site": "PASADENA",
+      "state": "Texas",
+      "reason": "no atmospheric crude distillation capacity",
+      "units": [
+        "ALKYLATES"
+      ]
+    },
+    {
+      "company": "TARGA DOWNSTREAM LLC",
+      "site": "MONT BELVIEU",
+      "state": "Texas",
+      "reason": "no atmospheric crude distillation capacity",
+      "units": [
+        "DESULFURIZATION, OTHER"
+      ]
+    },
+    {
+      "company": "TRECORA HYDROCARBONS LLC",
+      "site": "SILSBEE",
+      "state": "Texas",
+      "reason": "no atmospheric crude distillation capacity",
+      "units": [
+        "AROMATICS",
+        "CAT REFORMING: LOW PRESSURE",
+        "DESULFURIZATION, NAPHTHA/REFORMER FEED",
+        "DESULFURIZATION, OTHER",
+        "ISOMERIZATION (ISOPENTANE/ISOHEXANE)"
+      ]
+    }
+  ]
+}

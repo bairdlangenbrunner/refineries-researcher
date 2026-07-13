@@ -1,0 +1,9 @@
+{
+  "source": "eia",
+  "against": "master",
+  "source_rows": 124,
+  "against_rows": 1252,
+  "match": 163,
+  "possible": 58,
+  "source_unmatched": 1
+}

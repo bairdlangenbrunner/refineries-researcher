@@ -119,6 +119,12 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 - **ogim** — OGIM v2.7 refineries layer (GIS). Location/coordinate corroboration. Tier 2.
 - **china_rmi_tracker** — GEM's own China Independent Oil Refinery Tracker for RMI.
   **Schema template + China seed** — but GEM-authored, so **seed data, never a citation.**
+- **eia** — EIA Refinery Capacity Report (Form EIA-820), US-only, ~124 crude refineries, Tier 1
+  primary gov source and the **US capacity gold standard** (atmospheric crude distillation b/cd,
+  operable/idle status, operator, PADD; coords joined from the EIA Energy Atlas GIS layer).
+  Long/tidy workbook → the adapter pivots + derives status. **Mergeable** (has capacity + coords),
+  unlike irs_rcn. Excludes 6 downstream-only petchem/lube/NGL sites (no crude distillation). EIA
+  is federal public domain and NOT a GEM surface, so it is **citable**.
 - **irs_rcn** — IRS "Active Fuel Refineries" (Refiner Control Number) registry, US-only, Tier 1
   primary gov source. ⚠ Tax definition (§4101), broader than crude-only — ~half is gas/NGL/
   biodiesel/LNG/petchem. No capacity/coords → never auto-matches. **RULING (Baird): OVERLAY
@@ -184,7 +190,9 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 ```bash
 python scripts/ingest.py --source rmi   --out sources/rmi/canonical.parquet
 python scripts/ingest.py --source ogj   --out sources/ogj/canonical.parquet
+python scripts/ingest.py --source eia   --out sources/eia/canonical.parquet
 python scripts/match.py   --against master --source ogj --out batches/staging/match_ogj/
+python scripts/build_reconciliation_review.py --source eia   # match_<src> -> batches/refineries_<src>_reconciliation_<stamp>.xlsx
 python scripts/merge.py   --sources rmi,ogj,ogim,china_rmi_tracker --out data/master_<stamp>.parquet
 python scripts/export_master.py                 # latest master -> batches/refineries_master_<stamp>_worldwide_export.xlsx (drops RefineryID)
 python scripts/export_possible_review.py        # latest master's possible pairs -> batches/refineries_possible_review_<stamp>.xlsx
