@@ -3,7 +3,7 @@
 Sources spell countries differently — RMI uses short title-case ("Russia", "United
 States"), OGIM uses UPPERCASE official names ("RUSSIAN FEDERATION", "UNITED STATES OF
 AMERICA"), china_rmi_tracker carries none (implied China), OGJ carries none (Europe).
-This fragments the geography and breaks per-country workflows, so the master stores ONE
+This fragments the geography and breaks per-country workflows, so the main stores ONE
 canonical country name + ISO3.
 
 `canonical_country(name)` -> (canonical_name, iso3) using pycountry with a small overrides

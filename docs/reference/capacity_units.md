@@ -1,6 +1,6 @@
 # Capacity units & conversions
 
-Refinery capacity is quoted in several units across the background sources. The master
+Refinery capacity is quoted in several units across the background sources. The main
 always stores the **original** value + units (`Capacity`, `CapacityUnits`) **and** a
 normalized `CapacityInKbpd`. `scripts/capacity_normalize.py` is the single source of truth
 for the math — import it, don't re-derive conversions inline.

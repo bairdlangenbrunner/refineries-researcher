@@ -6,7 +6,7 @@ of `lng-terminals-researcher`, `lng-carriers-researcher`, and `pipelines-researc
 conventions, but **greenfield** — the first job is assembling the initial database from
 several background datasets, then maintaining it.
 
-The agent never publishes and never machine-overwrites the curated master. Every batch
+The agent never publishes and never machine-overwrites the curated main. Every batch
 produces a reviewable Excel deliverable + staged JSON that the researcher applies by hand.
 
 ## Layout
@@ -22,11 +22,11 @@ docs/
   PROJECT_SETUP_AND_CONTEXT.md
 sources/                      pluggable background-dataset registry (9 sources) —
                               manifest.yml (+ adapter.py) each; see sources/README.md
-scripts/                      ingest / match / merge / export_master / export_possible_review /
+scripts/                      ingest / match / merge / export_main / export_possible_review /
                               build_reconciliation_review / build_review_package /
                               entity_lookup / url_verifier (+ paths, capacity_normalize,
                               country_normalize)
-data/                         master_*.parquet (+ .build.json/.conflicts/.possible) + gitignored raw
+data/                         main_*.parquet (+ .build.json/.conflicts/.possible) + gitignored raw
 batches/                      xlsx deliverables + staging/ (match_<src>/ per reconciliation run)
 tests/
 ```
@@ -39,8 +39,8 @@ python scripts/capacity_normalize.py                        # self-check the uni
 python scripts/ingest.py --source rmi                       # background source -> canonical.parquet
 python scripts/merge.py \
     --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace \
-    --out data/master_<stamp>.parquet                       # irs_rcn is overlay-only, never merged
-python scripts/export_master.py                             # latest master -> worldwide export xlsx
+    --out data/main_<stamp>.parquet                       # irs_rcn is overlay-only, never merged
+python scripts/export_main.py                             # latest main -> worldwide export xlsx
 ```
 
 ## Background sources (9 registered)
@@ -64,8 +64,8 @@ Full detail — row counts, unit traps, quirks, citability — in `docs/referenc
 
 ## Status (greenfield)
 
-**Union master built** from the eight mergeable sources (`rmi, ogj, ogim, china_rmi_tracker,
-eia, india_ppac, brazil_anp, climate_trace`): latest `data/master_20260713_1416_ET.parquet` —
+**Union main built** from the eight mergeable sources (`rmi, ogj, ogim, china_rmi_tracker,
+eia, india_ppac, brazil_anp, climate_trace`): latest `data/main_20260713_1416_ET.parquet` —
 **1260 rows** from 2747 input, 706 multi-source clusters, 291 conflicts, 1258 `possible`
 pairs queued for review. Every row is `InScope=unknown` (superset-first; the Phase-B scope
 pass is pending). Per-field source priority (in `merge.py`) puts the Tier-1 gov sources
@@ -74,11 +74,11 @@ national capacity), RMI as the global design-capacity backbone, and climate_trac
 nameplate capacity **last** (it runs high vs operating figures → only fills genuine-miss
 rows; overlaps go to the conflicts report, never adopted).
 
-`irs_rcn` is **overlay-only by ruling** — never merged; it is reconciled against the master
+`irs_rcn` is **overlay-only by ruling** — never merged; it is reconciled against the main
 into `batches/refineries_irs_rcn_reconciliation_*.xlsx` for hand-worked US discovery.
 
 **Engine done:** `ingest`, `match` (cKDTree coord-blocking + country-blocked greedy-1:1),
-`merge`, `export_master`, `export_possible_review`, `build_reconciliation_review`,
+`merge`, `export_main`, `export_possible_review`, `build_reconciliation_review`,
 `capacity_normalize`, `country_normalize`, `paths`.
 **Still skeletons:** `build_review_package` (staged JSON → batch xlsx), `entity_lookup`
 (needs a shared-entity source), `url_verifier` fetch/match (host-block logic is live).

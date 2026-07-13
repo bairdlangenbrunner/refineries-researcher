@@ -1,7 +1,7 @@
 # Staging workbook conventions
 
 Every batch produces one xlsx under `batches/` (never overwrites; each build gets a fresh
-timestamp). Baird reviews it and applies edits to the master manually.
+timestamp). Baird reviews it and applies edits to the main manually.
 
 ## Filename
 
@@ -15,22 +15,22 @@ timestamp). Baird reviews it and applies edits to the master manually.
 
 ## Sheets
 
-Depends on mode; the leading sheet is always a **1:1 mirror of the relevant master rows**
+Depends on mode; the leading sheet is always a **1:1 mirror of the relevant main rows**
 in schema column order (see `gem_schema.md`), current values prefilled, with overlays only
 on touched cells.
 
 **Do not emit the internal `RefineryID` (`R####`) column in review xlsx outputs.** It's an
-internal crosswalk key (kept in `data/id_crosswalk.json` and the master parquet), not a
+internal crosswalk key (kept in `data/id_crosswalk.json` and the main parquet), not a
 review field — Baird doesn't want it cluttering deliverables. Keep the source ID columns
 (`rmi_refine_id`, `ogj_id`, `ogim_id`, `china_id`) and `SourcesPresent` for provenance.
 
 Typical sheets:
 
-- `master_mirror` / `<mode>_edits` — the rows to change, in schema order, `SheetRow`-keyed.
+- `main_mirror` / `<mode>_edits` — the rows to change, in schema order, `SheetRow`-keyed.
 - `new_refineries` — proposed new records (discovery/build).
-- `background_only` — background-dataset rows that didn't match the master (candidates to
+- `background_only` — background-dataset rows that didn't match the main (candidates to
   match to `OtherNames` first, then discover).
-- `conflicts` — per-field disagreements between master and a background dataset.
+- `conflicts` — per-field disagreements between main and a background dataset.
 - `entities` — new owners/parents needing an `entity_lookup.py` check.
 - `qa` — flags, scope-boundary questions, unresolved items.
 

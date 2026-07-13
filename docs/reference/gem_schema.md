@@ -1,9 +1,9 @@
 # GEM Refinery schema (Global Oil Refinery Tracker — working name GORT)
 
-Authoritative column list + meaning for the master refinery database. Derived from GEM's
+Authoritative column list + meaning for the main refinery database. Derived from GEM's
 own **China Independent Oil Refinery Tracker for RMI** data dictionary and generalized
 worldwide (China-only fields dropped; lifecycle statuses and source-crosswalk fields
-added). This is the schema the staging xlsx and `data/master_*.parquet` conform to.
+added). This is the schema the staging xlsx and `data/main_*.parquet` conform to.
 
 Every substantive field is **`[ref]`-paired**: the value column holds a value, the paired
 `… [ref]` column holds one or more corroborating URLs (space- or newline-separated). Never

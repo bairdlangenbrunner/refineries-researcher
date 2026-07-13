@@ -5,11 +5,11 @@
 
 ## Inputs
 
-- `data/master_*.parquet` (once it exists) — coverage by country, fill rates, staleness.
+- `data/main_*.parquet` (once it exists) — coverage by country, fill rates, staleness.
 - `sources/*/canonical_summary.json` — what each background source still offers that the
-  master lacks.
+  main lacks.
 - Prior `conflicts`/`qa` items from build/reconciliation/QC.
-- External sanity checks: EIA/JODI/OPEC country refining-capacity totals vs master totals.
+- External sanity checks: EIA/JODI/OPEC country refining-capacity totals vs main totals.
 
 ## Produce
 

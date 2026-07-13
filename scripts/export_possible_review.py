@@ -1,12 +1,12 @@
 """Turn a build's `possible` (non-clustered) pairs into a reviewable xlsx.
 
-    python scripts/export_possible_review.py            # latest master's .possible.parquet
-    python scripts/export_possible_review.py --master data/master_YYYYMMDD_HHMM_ET.parquet
+    python scripts/export_possible_review.py            # latest main's .possible.parquet
+    python scripts/export_possible_review.py --main data/main_YYYYMMDD_HHMM_ET.parquet
 
-`merge.py` writes candidate pairs it would NOT auto-cluster to master_<stamp>.possible.parquet
+`merge.py` writes candidate pairs it would NOT auto-cluster to main_<stamp>.possible.parquet
 (name/capacity agree enough to flag, not enough to merge). This renders them side-by-side —
 each side's name/country/city/capacity/coords — so a human can rule same-vs-different and
-route confirmed merges back to the master by hand. It adds blank Decision/Notes columns and
+route confirmed merges back to the main by hand. It adds blank Decision/Notes columns and
 never edits any data.
 
 Decision vocab (put one per row): `merge` (same refinery), `separate` (distinct),
@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # runnable from repo root
-from paths import BATCHES, latest_master
+from paths import BATCHES, latest_main
 from match import load_canonical
 
 try:
@@ -43,19 +43,19 @@ def _side(frames_by_id: dict, src: str, sid) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--master", help="path to a master_*.parquet (default: latest)")
+    ap.add_argument("--main", help="path to a main_*.parquet (default: latest)")
     ap.add_argument("--out", help="output xlsx (default: batches/refineries_possible_review_<stamp>.xlsx)")
     args = ap.parse_args()
 
-    master = Path(args.master) if args.master else latest_master()
-    if master is None or not master.exists():
-        sys.exit("No master found — build one with scripts/merge.py first.")
-    possible_path = master.with_suffix(".possible.parquet")
+    main = Path(args.main) if args.main else latest_main()
+    if main is None or not main.exists():
+        sys.exit("No main found — build one with scripts/merge.py first.")
+    possible_path = main.with_suffix(".possible.parquet")
     if not possible_path.exists():
-        sys.exit(f"No possible-pairs file next to the master ({possible_path.name}).")
+        sys.exit(f"No possible-pairs file next to the main ({possible_path.name}).")
     p = pd.read_parquet(possible_path)
 
-    stamp = master.stem[len("master_"):]
+    stamp = main.stem[len("main_"):]
     out = Path(args.out) if args.out else (BATCHES / f"refineries_possible_review_{stamp}.xlsx")
     out.parent.mkdir(parents=True, exist_ok=True)
 

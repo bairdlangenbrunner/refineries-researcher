@@ -1,6 +1,6 @@
-"""Match refinery records across canonical sources (or a source vs the master).
+"""Match refinery records across canonical sources (or a source vs the main).
 
-    python scripts/match.py --source ogj --against master --out batches/staging/match_ogj/
+    python scripts/match.py --source ogj --against main --out batches/staging/match_ogj/
     python scripts/match.py --source ogj --against rmi     --out batches/staging/match_ogj_rmi/
 
 Hybrid point-feature matcher. Refineries are points, so geometry is a haversine
@@ -13,7 +13,7 @@ candidate pair is scored on:
 and labelled match / possible / no.
 
 Reused by BOTH build (merge.py clusters across all sources) and reconciliation (one
-source vs the master). See docs/sops/build.md and docs/sops/reconciliation.md.
+source vs the main). See docs/sops/build.md and docs/sops/reconciliation.md.
 
 Coordinate note: WKT is lon-first `POINT(lon lat)`; OGJ position is `[lat, lon]` — both
 are already resolved to canonical latitude/longitude columns at ingest, so this module
@@ -30,7 +30,7 @@ from math import radians, sin, cos, asin, sqrt
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # runnable from repo root
-from paths import SOURCES, latest_master
+from paths import SOURCES, latest_main
 
 try:
     import pandas as pd
@@ -151,7 +151,7 @@ def _country_key(df: "pd.DataFrame") -> "pd.Series":
     """One ISO3 blocking key per row for the coordless path. Sources spell countries
     incompatibly (OGJ has ISO3 'ARG'; OGIM has UPPERCASE names 'ARGENTINA' and no ISO3),
     so resolve BOTH to ISO3 via country_normalize. Falls back to a normalized name only if
-    the country can't be resolved. Tolerates canonical (`iso3`/`country`) and master-renamed
+    the country can't be resolved. Tolerates canonical (`iso3`/`country`) and main-renamed
     (`ISO3`/`Country`) frames. Rows with no country get None (never block-matched)."""
     from country_normalize import canonical_country
     iso = df.get("iso3", df.get("ISO3"))
@@ -274,16 +274,16 @@ def load_canonical(name: str) -> "pd.DataFrame":
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", required=True)
-    ap.add_argument("--against", default="master", help="'master' or another source name")
+    ap.add_argument("--against", default="main", help="'main' or another source name")
     ap.add_argument("--out", required=True, help="output directory")
     ap.add_argument("--block-km", type=float, default=25.0)
     args = ap.parse_args()
 
     src = load_canonical(args.source)
-    if args.against == "master":
-        mp = latest_master()
+    if args.against == "main":
+        mp = latest_main()
         if mp is None:
-            sys.exit("No master yet (data/master_*.parquet). Build it first with merge.py.")
+            sys.exit("No main yet (data/main_*.parquet). Build it first with merge.py.")
         against = pd.read_parquet(mp).rename(
             columns={"RefineryID": "source_id", "RefineryName": "name",
                      "CapacityInKbpd": "capacity_kbpd", "Latitude": "latitude",

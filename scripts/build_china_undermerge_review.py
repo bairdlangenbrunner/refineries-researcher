@@ -4,7 +4,7 @@
     python scripts/build_china_undermerge_review.py --out batches/refineries_china_undermerge_<stamp>.xlsx
 
 The problem: the GEM China Independent (teapot) tracker seeds 101 China rows into the
-master. Climate TRACE's coordinates already fold most (61) into multi-source clusters, but
+main. Climate TRACE's coordinates already fold most (61) into multi-source clusters, but
 the rest sit as UNMERGED SINGLETONS while RMI / OGJ / OGIM / Climate TRACE may describe the
 same plant under a different name. The generic matcher can't bridge those because the
 tracker keys refineries by COMPANY name (e.g. "Shandong Dongming Petrochemical Group Co
@@ -13,12 +13,12 @@ low, so build's match drops the pair to `possible` or misses it. The tracker's o
 `RMIFacilityName` column names the RMI plant explicitly; this script uses that as a
 deterministic bridge on top of the geo/capacity matcher.
 
-Which teapots are still solo is read from the master's own `china_id` column (the 1:1 record
+Which teapots are still solo is read from the main's own `china_id` column (the 1:1 record
 of which china_rmi_tracker source_id fed each cluster) — NOT id_crosswalk.json, which is
 anchor-keyed (one highest-priority source per cluster) and so omits teapots that merged under
 an RMI/OGJ anchor. Only solo teapots are hunted; merged ones are already resolved.
 
-Reconciles the china_rmi_tracker source rows against the NON-tracker China master rows
+Reconciles the china_rmi_tracker source rows against the NON-tracker China main rows
 (SourcesPresent without `china_rmi_tracker`) — i.e. the potential duplicate entities —
 and emits per-teapot merge candidates for Baird to confirm and collapse by hand. This is a
 REVIEW deliverable, never an applied edit; per standing rule internal RefineryIDs are NOT
@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from paths import latest_master, SOURCES, BATCHES, REPO
+from paths import latest_main, SOURCES, BATCHES, REPO
 from match import match_sources, name_score, normalize_name
 
 try:
@@ -111,10 +111,10 @@ def main() -> None:
     ap.add_argument("--out")
     args = ap.parse_args()
 
-    mp = latest_master()
+    mp = latest_main()
     if mp is None:
-        sys.exit("No master yet (data/master_*.parquet).")
-    stamp = mp.stem[len("master_"):]
+        sys.exit("No main yet (data/main_*.parquet).")
+    stamp = mp.stem[len("main_"):]
 
     src = pd.read_parquet(SOURCES / SRC / "canonical.parquet").copy()
     src["source_id"] = src["source_id"].map(_sid)
@@ -123,24 +123,24 @@ def main() -> None:
     mst = pd.read_parquet(mp)
     cn = mst[mst["ISO3"].astype(str) == "CHN"].copy()
 
-    # Map each teapot -> its master row DIRECTLY via the master's own `china_id` column
+    # Map each teapot -> its main row DIRECTLY via the main's own `china_id` column
     # (the source_id of the china_rmi_tracker row that fed the cluster). This is exact and
     # anchor-independent — unlike data/id_crosswalk.json, which is keyed by each cluster's
     # single highest-priority anchor source (rmi > ogj > ogim > china_rmi_tracker ...), so a
     # teapot that merged under an RMI/OGJ anchor has NO `china_rmi_tracker:` crosswalk key at
     # all. The same-source guard makes china_id 1:1, so this join is unambiguous.
-    tstate = {}  # teapot source_id -> {"state","master_name","sources"}
+    tstate = {}  # teapot source_id -> {"state","main_name","sources"}
     for _, mr in mst[mst["china_id"].notna()].iterrows():
         tid = _sid(mr["china_id"])
         srcs = str(mr["SourcesPresent"])
         n = len([t for t in srcs.split(",") if t.strip()])
         tstate[tid] = {
             "state": "merged" if n > 1 else "solo",
-            "master_name": mr.get("RefineryName"),
+            "main_name": mr.get("RefineryName"),
             "sources": srcs,
         }
 
-    # candidate pool = China master rows WITHOUT the china tracker = potential dup entities
+    # candidate pool = China main rows WITHOUT the china tracker = potential dup entities
     has_tracker = cn["SourcesPresent"].astype(str).str.contains(SRC)
     cand = cn[~has_tracker].copy().reset_index(drop=True)
     cand_frame = pd.DataFrame({
@@ -223,7 +223,7 @@ def main() -> None:
             "teapot_city": s.get("city"),
             "teapot_province": s.get("subnational"),
             "teapot_cap_kbpd": _f(s.get("capacity_kbpd")),
-            "merged_into_master_name": st["master_name"],
+            "merged_into_main_name": st["main_name"],
             "merged_with_sources": st["sources"],
             "rmi_facility_name": ex.get("rmi_facility_name"),
         })
@@ -241,7 +241,7 @@ def main() -> None:
             "teapot_cap_kbpd": _f(s.get("capacity_kbpd")),
             "teapot_status": s.get("status"),
             "teapot_owner": s.get("owner"),
-            "in_master_as": "solo",
+            "in_main_as": "solo",
             "is_in_rmi_flag": ex.get("is_in_rmi"),
             "rmi_facility_name": ex.get("rmi_facility_name"),
         }
@@ -296,11 +296,11 @@ def main() -> None:
 
     summary = pd.DataFrame([
         ("source", SRC),
-        ("master", mp.name),
+        ("main", mp.name),
         ("teapot rows (china tracker)", len(src)),
-        ("  already merged in master (resolved, no action)", len(merged_df)),
-        ("  solo in master (under-merge surface)", len(src_solo)),
-        ("China master rows total", len(cn)),
+        ("  already merged in main (resolved, no action)", len(merged_df)),
+        ("  solo in main (under-merge surface)", len(src_solo)),
+        ("China main rows total", len(cn)),
         ("  candidate pool (non-tracker China rows)", len(cand)),
         ("solo teapots with >=1 merge candidate", teapots_with_cand),
         ("  high-confidence (RMIname or tight geo)", high),
@@ -310,10 +310,10 @@ def main() -> None:
 
     readme = pd.DataFrame([
         ("What this is", "Per-teapot merge candidates linking SOLO GEM China Independent tracker "
-                         "rows to their duplicate RMI/OGJ/OGIM/Climate-TRACE entities in the master."),
+                         "rows to their duplicate RMI/OGJ/OGIM/Climate-TRACE entities in the main."),
         ("Why", "The tracker uses company names, RMI uses plant names, so build's matcher can't "
                 "always bridge them — leaving some teapots as unmerged singletons (under-merge)."),
-        ("Scope", "Only teapots that are SOLO (china-tracker-only) in the current master are hunted "
+        ("Scope", "Only teapots that are SOLO (china-tracker-only) in the current main are hunted "
                   "— those are the genuine under-merge surface. Teapots already merged into a "
                   "multi-source cluster are resolved and listed (no action) in Already_merged."),
         ("match_via = rmi_name(score)", "The teapot's own RMIFacilityName column matched this "
@@ -321,12 +321,12 @@ def main() -> None:
         ("match_via = geo/label", "The generic matcher paired them by coordinate/capacity/name."),
         ("confidence", "high = confident same plant; medium = likely; low = weak, verify."),
         ("How to use", "For each high/medium row, confirm the teapot row and the candidate are the "
-                       "same refinery, then COLLAPSE them in the master by hand (fold the teapot "
+                       "same refinery, then COLLAPSE them in the main by hand (fold the teapot "
                        "name into the candidate's OtherNames, keep one record). Agent never merges."),
         ("Merge_candidates", "solo teapots that have >=1 candidate (one row per teapot x candidate)."),
         ("Teapot_no_candidate", "solo teapots with no found twin; RMI-flagged ones without a twin "
                                 "are listed first as anomalies to investigate."),
-        ("Already_merged", "teapots already folded into a multi-source master cluster — resolved, "
+        ("Already_merged", "teapots already folded into a multi-source main cluster — resolved, "
                            "shown for audit (what they merged with), no action needed."),
         ("Standing rule", "Internal RefineryIDs are not emitted; identify rows by name/city/"
                           "capacity/sources. GEM tracker is seed only, never a [ref]."),

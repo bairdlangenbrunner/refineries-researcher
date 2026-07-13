@@ -1,11 +1,11 @@
-"""Build/refresh the union master from the canonical sources (greenfield step 2).
+"""Build/refresh the union main from the canonical sources (greenfield step 2).
 
     python scripts/merge.py --sources rmi,ogj,ogim,china_rmi_tracker \
-        --out data/master_<stamp>.parquet
+        --out data/main_<stamp>.parquet
 
 Superset-first: UNION every source row, cluster the ones that are the same physical
-refinery, and emit ONE master record per cluster on the GEM schema (paths.SCHEMA). We
-never scope-filter here — every input row survives into exactly one master row; scope is
+refinery, and emit ONE main record per cluster on the GEM schema (paths.SCHEMA). We
+never scope-filter here — every input row survives into exactly one main row; scope is
 a separate reversible pass (InScope defaults to 'unknown').
 
 Clustering (match.py supplies the edges):
@@ -22,11 +22,11 @@ NOT silently resolved — they go to a conflicts report; the kept value is the p
 No `[ref]` columns are filled at build (background URLs are unverified; citable:false
 sources contribute no URL) — the Update workflow researches and fills refs later.
 
-Outputs (under the master's directory):
-  data/master_<stamp>.parquet         the union master
-  data/master_<stamp>.build.json      cluster/singleton/conflict counts
-  data/master_<stamp>.conflicts.parquet   per-cluster field disagreements
-  data/master_<stamp>.possible.parquet    possible (non-clustered) pairs for review
+Outputs (under the main's directory):
+  data/main_<stamp>.parquet         the union main
+  data/main_<stamp>.build.json      cluster/singleton/conflict counts
+  data/main_<stamp>.conflicts.parquet   per-cluster field disagreements
+  data/main_<stamp>.possible.parquet    possible (non-clustered) pairs for review
   data/id_crosswalk.json              anchor-id -> RefineryID, for stable ids across rebuilds
 
 See docs/sops/build.md.
@@ -315,9 +315,9 @@ def main() -> None:
             multi += 1
             conflicts.extend(_conflicts(cl, frames, refid))
 
-    master = pd.DataFrame(records, columns=ordered_columns())
+    main = pd.DataFrame(records, columns=ordered_columns())
     out.parent.mkdir(parents=True, exist_ok=True)
-    master.to_parquet(out, index=False)
+    main.to_parquet(out, index=False)
     conflicts_df = pd.DataFrame(conflicts, columns=["RefineryID", "field", "values"])
     conflicts_df.to_parquet(out.with_suffix(".conflicts.parquet"), index=False)
     if not possible_df.empty:
@@ -329,16 +329,16 @@ def main() -> None:
             singletons[cl[0][0]] += 1
     report = {
         "sources": names, "input_rows": total_in,
-        "master_rows": len(master), "clusters": len(clusters),
+        "main_rows": len(main), "clusters": len(clusters),
         "multi_source_clusters": multi,
         "singletons_per_source": singletons,
         "same_source_collisions_blocked": blocked,
         "conflicts": len(conflicts),
         "possible_pairs": int(len(possible_df)),
-        "dedup_collapsed": total_in - len(master),
+        "dedup_collapsed": total_in - len(main),
     }
     out.with_suffix(".build.json").write_text(json.dumps(report, indent=2))
-    print(f"master: {len(master)} rows ({report['dedup_collapsed']} collapsed by dedup), "
+    print(f"main: {len(main)} rows ({report['dedup_collapsed']} collapsed by dedup), "
           f"{multi} multi-source, {len(conflicts)} field conflicts, "
           f"{blocked} same-source collisions blocked -> {out}")
 

@@ -1,13 +1,13 @@
 # SOP — Discover new refineries
 
-**Goal:** find refineries missing from the master. Recipe: `workflows.md` §4.
+**Goal:** find refineries missing from the main. Recipe: `workflows.md` §4.
 
 ## Where to look
 
 - **Background-only rows** from build/reconciliation (RMI/OGJ/OGIM rows unmatched to the
-  master). **Match to an existing record's `OtherNames` first** — most are renames, not
+  main). **Match to an existing record's `OtherNames` first** — most are renames, not
   misses. Only genuine misses become new records.
-- **Coverage gaps:** countries/regions with few or zero master records vs known refining
+- **Coverage gaps:** countries/regions with few or zero main records vs known refining
   capacity (EIA/JODI country totals as a sanity check).
 - **New-build pipeline:** announced `proposed`/`construction` refineries (trade press,
   operator announcements, government energy plans).

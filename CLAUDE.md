@@ -6,13 +6,13 @@ open-access tracker (the *Global Oil Refinery Tracker*, working name **GORT**).
 
 This project is **greenfield**: unlike the sibling LNG/pipeline researchers, there is
 **no live GEM refineries backend yet**. The near-term job is to *build the initial
-database* by ingesting several background datasets, de-duplicating them into one master
+database* by ingesting several background datasets, de-duplicating them into one main
 record set on GEM's schema, and researching the gaps. The medium-term job is the same
 maintenance loop the siblings run (update / discover / reconcile / triage / QC).
 
 Researcher initials in the tracker: **BL**. The agent **never overwrites a hand-curated
-master by machine merge** and **never publishes** — every batch produces a reviewable
-Excel deliverable + staged JSON that Baird reviews and applies to the master manually.
+main by machine merge** and **never publishes** — every batch produces a reviewable
+Excel deliverable + staged JSON that Baird reviews and applies to the main manually.
 
 Where things live — **read on demand as the workflow dictates, not all at once**:
 
@@ -23,7 +23,7 @@ Where things live — **read on demand as the workflow dictates, not all at once
   location accuracy). **Capacity units + conversions** (the `tttpa`/万吨 trap, Mt/a↔kbpd):
   `docs/reference/capacity_units.md`.
 - **SOPs** (operational *how*): `docs/sops/` — `ingest.md` (background source → canonical),
-  `build.md` (merge canonical sources → master), `discovery.md`, `update.md`,
+  `build.md` (merge canonical sources → main), `discovery.md`, `update.md`,
   `reconciliation.md`, `triage.md`, `qc.md`.
 - **Workflow recipes** (commands, in order): `docs/workflows.md`.
 - **Background-dataset registry**: `sources/` — one `manifest.yml` (+ optional `adapter.py`)
@@ -89,19 +89,19 @@ Read the relevant `docs/workflows.md` section + SOP before starting a batch.
 | Workflow | Trigger phrases | Recipe + rules |
 |---|---|---|
 | **Ingest a background source** (greenfield) | "ingest RMI", "load the OGJ map", "pull OGIM refineries into canonical", "add a source" | `workflows.md` §1 + Ingest SOP |
-| **Build/refresh the master** (greenfield) | "build the master", "merge the sources", "de-dup RMI vs OGJ", "rebuild the master database" | `workflows.md` §2 + Build SOP |
+| **Build/refresh the main** (greenfield) | "build the main", "merge the sources", "de-dup RMI vs OGJ", "rebuild the main database" | `workflows.md` §2 + Build SOP |
 | **Update existing refineries** (maintenance) | "update refineries in <country>", "refresh <country>", "fill blank refs", "status sweep for <country>" | `workflows.md` §3 + Update SOP |
 | **Discover new refineries** | "find new refineries in <country>", "discovery run", "what's missing in <country>" | `workflows.md` §4 + Discovery SOP |
-| **Reconcile vs a background dataset** | "reconcile OGJ for <country>", "OGIM diff", "compare master to <dataset>" | `workflows.md` §5 + Reconciliation SOP |
+| **Reconcile vs a background dataset** | "reconcile OGJ for <country>", "OGIM diff", "compare main to <dataset>" | `workflows.md` §5 + Reconciliation SOP |
 | **Triage** (plan the batch; memo) | "what should we work on", "what's stale", "where are the gaps" | `workflows.md` §6 + Triage SOP; output is a markdown memo |
 | **Quality control** (xlsx; detects → Update fixes) | "qc pass", "data-health audit", "link-rot sweep" | `workflows.md` §7 + QC SOP; memo/xlsx, never edits live data |
 
 Routing notes:
 - In the greenfield phase the common path is **Ingest → Build → Discovery/Update**.
   Reconciliation is the same engine as Build's cross-source match, run against a *single*
-  dataset once the master exists.
-- A background-only row (present in RMI/OGJ/OGIM but not the master) is usually **not** a
-  new refinery — **match it to an existing master record under another name first** (→
+  dataset once the main exists.
+- A background-only row (present in RMI/OGJ/OGIM but not the main) is usually **not** a
+  new refinery — **match it to an existing main record under another name first** (→
   `OtherNames`); only genuine misses become new records.
 - QC never edits: it audits and routes fixes to Update ("QC detects, Update fixes").
 
@@ -115,7 +115,7 @@ status map, `source_tier`, ID field) + an optional `adapter.py` for custom parsi
 `scripts/ingest.py` normalizes any source into one **canonical schema**
 (`sources/_schema/canonical_record.md`); `scripts/match.py` + `scripts/merge.py` then run
 the hybrid (name + country + coordinate-distance + capacity) match to build/refresh the
-master. **Adding a dataset is config, not engine code** — drop a new manifest and run
+main. **Adding a dataset is config, not engine code** — drop a new manifest and run
 `ingest.py --source <name>`.
 
 Registered sources (full detail in `docs/reference/source_roster.md`):
@@ -128,7 +128,7 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 - **eia** — EIA Refinery Capacity Report (Form EIA-820), US-only, ~124 crude refineries, Tier 1
   primary gov source and the **US capacity gold standard** (atmospheric crude distillation b/cd,
   operable/idle status, operator, PADD; coords joined from the EIA Energy Atlas GIS layer).
-  Long/tidy workbook → the adapter pivots + derives status. **Merged** into the master (unlike
+  Long/tidy workbook → the adapter pivots + derives status. **Merged** into the main (unlike
   irs_rcn), and the priority source for US capacity/status/owner. Excludes 6 downstream-only
   petchem/lube/NGL sites (no crude distillation). EIA is federal public domain and NOT a GEM
   surface, so it is **citable**.
@@ -147,7 +147,7 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 - **irs_rcn** — IRS "Active Fuel Refineries" (Refiner Control Number) registry, US-only, Tier 1
   primary gov source. ⚠ Tax definition (§4101), broader than crude-only — ~half is gas/NGL/
   biodiesel/LNG/petchem. No capacity/coords → never auto-matches. **RULING (Baird): OVERLAY
-  ONLY — keep it registered + ingested, but NEVER merge into the master.** Its sole use is the
+  ONLY — keep it registered + ingested, but NEVER merge into the main.** Its sole use is the
   US reconciliation/discovery review workbook (`batches/refineries_irs_rcn_reconciliation_*.xlsx`);
   crude candidates are worked by hand, out-of-scope rows stay flagged.
 
@@ -155,8 +155,8 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 
 ## Hard requirements (override anything below)
 
-- **The agent never publishes and never machine-overwrites the curated master.** Output
-  is a staging xlsx + staged JSON; Baird applies edits to the master manually.
+- **The agent never publishes and never machine-overwrites the curated main.** Output
+  is a staging xlsx + staged JSON; Baird applies edits to the main manually.
 - **Every URL passes `scripts/url_verifier.py` before going in the xlsx** — even URLs that
   worked in prior batches, even URLs inherited from RMI/OGJ. Verification means the
   specific claimed value (capacity, owner, status, year, coords) appears on that page.
@@ -192,7 +192,7 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 
 ## When to escalate to the user
 
-- A background dataset disagrees with the master on >10% of matched rows (material
+- A background dataset disagrees with the main on >10% of matched rows (material
   capacity/owner/status conflicts), or a source produces >30 background-only rows in one
   country that don't match existing records.
 - A whole class of values looks systematically wrong (schema/unit misunderstanding, not a
@@ -210,11 +210,11 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 python scripts/ingest.py --source rmi   --out sources/rmi/canonical.parquet
 python scripts/ingest.py --source ogj   --out sources/ogj/canonical.parquet
 python scripts/ingest.py --source eia   --out sources/eia/canonical.parquet
-python scripts/match.py   --against master --source irs_rcn --out batches/staging/match_irs_rcn/
+python scripts/match.py   --against main --source irs_rcn --out batches/staging/match_irs_rcn/
 python scripts/build_reconciliation_review.py --source irs_rcn   # match_<src> -> batches/refineries_<src>_reconciliation_<stamp>.xlsx (irs_rcn = the overlay-only source)
-python scripts/merge.py   --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace --out data/master_<stamp>.parquet   # irs_rcn is overlay-only, never merged
-python scripts/export_master.py                 # latest master -> batches/refineries_master_<stamp>_worldwide_export.xlsx (drops RefineryID)
-python scripts/export_possible_review.py        # latest master's possible pairs -> batches/refineries_possible_review_<stamp>.xlsx
+python scripts/merge.py   --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace --out data/main_<stamp>.parquet   # irs_rcn is overlay-only, never merged
+python scripts/export_main.py                 # latest main -> batches/refineries_main_<stamp>_worldwide_export.xlsx (drops RefineryID)
+python scripts/export_possible_review.py        # latest main's possible pairs -> batches/refineries_possible_review_<stamp>.xlsx
 python scripts/build_review_package.py --staging batches/staging/<run>/ \
     --output batches/refineries_batch_<stamp>_<scope>_<mode>.xlsx   # <stamp>: TZ=America/New_York date "+%Y%m%d_%H%M_ET"
 pip install -r requirements.txt
@@ -225,5 +225,5 @@ pip install -r requirements.txt
 1. Confirm the scope (country/region, and for reconciliation the `--source`) and whether
    you're in the greenfield (Ingest/Build) or maintenance (Update/Discover) phase.
 2. Read the relevant `docs/workflows.md` section + SOP.
-3. Load the master with the loader in `scripts/paths.py`; never work from a stale export.
+3. Load the main with the loader in `scripts/paths.py`; never work from a stale export.
 4. Run the pre-delivery checks (`docs/sops/qc.md`) before presenting.

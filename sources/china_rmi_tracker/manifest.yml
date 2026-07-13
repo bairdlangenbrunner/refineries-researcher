@@ -14,18 +14,18 @@ location:
   file_path: "data/china_independent_refinery_tracker.xlsx"   # gitignored; export before ingest
   sheet: "Refineries"
   header_row: 0
-  # NOTE (2026-07-13): this drive_file_id is the "...for RMI" EXPORT. GEM also keeps a live
-  # working master, "China Independent Oil Refinery Tracker - main"
-  # (drive_file_id 1sUPi1NqPnEUVky-09G7uxDyj2TL3HhAssIbkJMpLq2s). As of this date the two are
-  # DATA-IDENTICAL on the Refineries tab (same 101 rows, 0 field diffs across Status/Capacity/
-  # Owner/StartYear/Configuration), so we keep pointing at the "for RMI" export by Baird's call
-  # (leave-as-is). If the live "- main" sheet later diverges, re-export from THAT file_id.
+  # NOTE (2026-07-13): this drive_file_id is the "...for RMI" EXPORT. GEM also keeps a separate
+  # live working sheet (drive_file_id 1sUPi1NqPnEUVky-09G7uxDyj2TL3HhAssIbkJMpLq2s). As of this
+  # date the two are DATA-IDENTICAL on the Refineries tab (same 101 rows, 0 field diffs across
+  # Status/Capacity/Owner/StartYear/Configuration), so we keep pointing at the "for RMI" export
+  # by Baird's call (leave-as-is). If that live working sheet later diverges, re-export from
+  # THAT file_id.
   # Both are GEM-authored → seed only, NEVER citable, regardless of which one is used.
 
 id_field: "RefineryID"
 
 # China-only tracker with no Country column — stamp it so rows carry a blocking key
-# (match.py blocks the coordless OGJ on country) and a real country in the master.
+# (match.py blocks the coordless OGJ on country) and a real country in the main.
 defaults:
   country: "China"
   iso3: "CHN"

@@ -1,6 +1,6 @@
-# SOP — Build / refresh the master
+# SOP — Build / refresh the main
 
-**Goal:** cluster the ingested canonical sources into one master record per physical
+**Goal:** cluster the ingested canonical sources into one main record per physical
 refinery, on the GEM schema. Greenfield step 2. Recipe: `workflows.md` §2.
 
 ## Steps
@@ -19,16 +19,16 @@ refinery, on the GEM schema. Greenfield step 2. Recipe: `workflows.md` §2.
      `merge.py`); **routes disagreements to `conflicts`, never silently averages**;
    - normalizes capacity to `CapacityInKbpd`;
    - fills **no `[ref]` columns** (background URLs aren't verified GEM refs).
-3. Export + review: `export_master.py` (worldwide xlsx) and `export_possible_review.py`
+3. Export + review: `export_main.py` (worldwide xlsx) and `export_possible_review.py`
    (non-clustered `possible` pairs). Then:
    - `possible` pairs: confirm/reject; a confirmed one is an under-merge to fix (tune
      thresholds or add a name/capacity assignment);
-   - `master_<stamp>.conflicts.parquet`: material capacity/owner/status/location
+   - `main_<stamp>.conflicts.parquet`: material capacity/owner/status/location
      disagreements → queue for Update research. Note climate_trace's nameplate capacity is
      deliberately last in priority, so its high figures surface here rather than being adopted;
    - singletons present in only one source: confirm they're real (e.g. climate_trace-only
      genuine misses like Dangote/Duqm/Olmeca), not artifacts.
-4. Baird applies the reviewed build to the master.
+4. Baird applies the reviewed build to the main.
 
 ## Per-field source priority (set in `merge.py:FIELD_PRIORITY`)
 

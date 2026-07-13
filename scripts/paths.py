@@ -1,8 +1,8 @@
-"""Canonical paths + the master schema column order.
+"""Canonical paths + the main schema column order.
 
 Import this instead of hard-coding paths or column offsets anywhere else. The GEM schema
 (docs/reference/gem_schema.md) is the source of truth for meanings; this file is the
-machine-readable column order the workbook builder and master loader agree on.
+machine-readable column order the workbook builder and main loader agree on.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ STAGING = BATCHES / "staging"
 GEM_REPOS = REPO.parent
 
 
-# --- Master schema (see docs/reference/gem_schema.md) -------------------------------
+# --- Main schema (see docs/reference/gem_schema.md) -------------------------------
 # Value columns and their [ref] partners, in emit order. `None` = no [ref] partner.
 SCHEMA: list[tuple[str, str | None]] = [
     ("RefineryID", None),
@@ -65,7 +65,7 @@ SCHEMA: list[tuple[str, str | None]] = [
     ("Notes4", None),
 ]
 
-# Per-source crosswalk id column on the master (source name -> master column)
+# Per-source crosswalk id column on the main (source name -> main column)
 SOURCE_ID_COLUMN = {
     "rmi": "rmi_refine_id",
     "ogj": "ogj_id",
@@ -95,9 +95,9 @@ def ordered_columns() -> list[str]:
     return cols
 
 
-def latest_master() -> Path | None:
-    """Most recent data/master_<stamp>.parquet, or None if the master doesn't exist yet.
-    Excludes the sidecar outputs (master_<stamp>.possible.parquet / .conflicts.parquet),
+def latest_main() -> Path | None:
+    """Most recent data/main_<stamp>.parquet, or None if the main doesn't exist yet.
+    Excludes the sidecar outputs (main_<stamp>.possible.parquet / .conflicts.parquet),
     whose stems carry a second dot — otherwise `.possible` sorts last and gets picked."""
-    candidates = sorted(p for p in DATA.glob("master_*.parquet") if "." not in p.stem)
+    candidates = sorted(p for p in DATA.glob("main_*.parquet") if "." not in p.stem)
     return candidates[-1] if candidates else None

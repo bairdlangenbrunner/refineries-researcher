@@ -1,6 +1,6 @@
 # SOP — Update existing refineries
 
-**Goal:** research and stage edits to existing master records (fill blanks, refresh stale
+**Goal:** research and stage edits to existing main records (fill blanks, refresh stale
 values, add verified `[ref]`s). Recipe: `workflows.md` §3.
 
 ## Worklist

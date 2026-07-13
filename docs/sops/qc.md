@@ -11,7 +11,7 @@
   value (value filled, `[ref]` blank and not flagged estimated).
 - **No GEM/abarrelfull URLs** anywhere in `[ref]` columns.
 - **Capacity sanity:** `CapacityInKbpd` consistent with `Capacity`+`CapacityUnits`
-  (re-run `capacity_normalize`); flag outliers (>1,500 kbpd, or a 10× gap between master
+  (re-run `capacity_normalize`); flag outliers (>1,500 kbpd, or a 10× gap between main
   and a source — the 万吨 trap signature).
 - **Coordinates:** present, in range, on land near the stated country; flag lat/lon that
   look transposed.

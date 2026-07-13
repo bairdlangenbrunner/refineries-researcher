@@ -8,7 +8,7 @@ already exists via the oil/gas/LNG trackers). A match anywhere = reuse the exist
 
 TODO: implement against the shared GEM entity source. Until GORT has a live backend, the
 practical check is a fuzzy lookup over the union of Owner/Parent names already in the
-master + the other GEM tracker exports in ../gem-database-access/. Reuse
+main + the other GEM tracker exports in ../gem-database-access/. Reuse
 ../pipelines-researcher/scripts/entity_lookup.py once the entity source is decided.
 """
 

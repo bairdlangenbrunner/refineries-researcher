@@ -1,6 +1,6 @@
 # <Country>
 
-**Coverage:** <# master records> · **Sources:** <rmi/ogj/ogim/china present> · **Last swept:** <date>
+**Coverage:** <# main records> · **Sources:** <rmi/ogj/ogim/china present> · **Last swept:** <date>
 
 ## Open items
 - <refinery / field — the question, staged-not-applied vs needs-research>

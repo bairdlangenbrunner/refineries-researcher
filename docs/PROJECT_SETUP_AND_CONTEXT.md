@@ -9,13 +9,13 @@ built to the same conventions, but **greenfield**: there is no live GEM refineri
 yet, so the first job is assembling the initial database from background datasets.
 
 Researcher: Baird Langenbrunner (initials **BL**). The agent never publishes and never
-machine-overwrites the curated master — it produces reviewable xlsx + staged JSON that
+machine-overwrites the curated main — it produces reviewable xlsx + staged JSON that
 Baird applies by hand.
 
 ## The greenfield pipeline
 
 ```
-   mergeable sources ─ingest.py──▶ canonical parquets ──merge.py──▶ master ──▶ Update/Discover/QC
+   mergeable sources ─ingest.py──▶ canonical parquets ──merge.py──▶ main ──▶ Update/Discover/QC
    (rmi, ogj, ogim, china,         (one schema)         (GEM schema,
     eia, india_ppac,                                     RefineryIDs)      ▲
     brazil_anp, climate_trace)                                            │ reconcile (match.py +
@@ -24,14 +24,14 @@ Baird applies by hand.
 ```
 
 1. **Ingest** each source to the canonical schema (`ingest.py`, per source).
-2. **Build** the master by clustering across the 8 mergeable sources (`merge.py`/`match.py`).
-3. **Reconcile** the overlay-only source (`irs_rcn`) against the master → a review workbook
+2. **Build** the main by clustering across the 8 mergeable sources (`merge.py`/`match.py`).
+3. **Reconcile** the overlay-only source (`irs_rcn`) against the main → a review workbook
    (`match.py` + `build_reconciliation_review.py`). Same engine reconciles any single source.
 4. **Update / Discover / QC** — ongoing maintenance, same as the siblings.
 
 ## Background sources (9 registered — see `docs/reference/source_roster.md`)
 
-**Mergeable — clustered into the master** (`merge.py --sources`):
+**Mergeable — clustered into the main** (`merge.py --sources`):
 - **RMI Refinery List (Feb '23)** — 484 rows, primary seed. Drive folder
   `1gJaJ7KYByNAHzoF0ve6ienuEvsfP28bV`, file `15CoiFuiT-JtDD-cb3ZV-Cx_Qb8RUPiDk`.
 - **OGJ Worldwide Refining survey** — 577 rows, rebuilt from the WW Refining PDF (country
@@ -63,11 +63,11 @@ Baird applies by hand.
   "Scope-boundary rulings".
 - **Match thresholds** for `merge.py` clustering (name/distance/capacity weights) →
   `sops/build.md`.
-- **Entity source** for `entity_lookup.py` until a live backend exists (union of master +
+- **Entity source** for `entity_lookup.py` until a live backend exists (union of main +
   `../gem-database-access/` exports?).
 - **Tracker name/abbrev** (GORT is a working name) and eventual publication surface.
 - **Capacity basis:** nameplate/design (RMI) vs distillation vs throughput — decide the
-  master's canonical basis and note conversions.
+  main's canonical basis and note conversions.
 
 ## Status of the build (update as it evolves)
 
@@ -80,7 +80,7 @@ Baird applies by hand.
   `tttpa`, `Mt/a`, and `'000 MT`/yr → kbpd all verified in `capacity_normalize`.
 - ✅ **Build**: `match.py` (cKDTree coord-blocking pass + COUNTRY-blocked greedy-1:1 pass for
   coordless sources) and `merge.py` (union-find, same-source guard) built; `country_normalize.py`
-  added. Latest union master `data/master_20260713_1416_ET.parquet`: **2747 → 1260 rows**,
+  added. Latest union main `data/main_20260713_1416_ET.parquet`: **2747 → 1260 rows**,
   706 multi-source clusters, 291 conflicts, 1258 `possible` pairs, IDs `R####` with
   `data/id_crosswalk.json`. **Built from all 8 mergeable sources** (rmi, ogj, ogim,
   china_rmi_tracker, eia, india_ppac, brazil_anp, climate_trace). Every row `InScope=unknown`
@@ -97,22 +97,22 @@ Baird applies by hand.
   (`eia_id`/`climate_trace_id`/`india_ppac_id`/`brazil_anp_id`), per-field priority + anchor
   order in `merge.py` (see `sops/build.md`). EIA (US), india_ppac, brazil_anp rank first for
   their country's capacity/status; climate_trace nameplate ranks last for capacity. Genuine
-  misses now carried IN the master: climate_trace → Dangote (NGA 650), Pemex Olmeca/Dos Bocas
+  misses now carried IN the main: climate_trace → Dangote (NGA 650), Pemex Olmeca/Dos Bocas
   (MEX 340), Duqm (OMN 230); brazil_anp → Ssoil Energy (Coroados SP, 12.5 kbpd).
-- ✅ **Exports + reconciliation**: `export_master.py` (worldwide export xlsx, drops RefineryID),
+- ✅ **Exports + reconciliation**: `export_main.py` (worldwide export xlsx, drops RefineryID),
   `export_possible_review.py` (possible-pairs review), and `build_reconciliation_review.py`
   (`match_<src>/` → per-source review workbook; fixed to tolerate a 0-match source). `irs_rcn`
-  is reconciled against the master (overlay-only) → `batches/refineries_irs_rcn_reconciliation_*.xlsx`.
+  is reconciled against the main (overlay-only) → `batches/refineries_irs_rcn_reconciliation_*.xlsx`.
 - ⛏ **Still skeletons**: `build_review_package.py` (staged JSON → batch xlsx), `entity_lookup.py`
   (blocked on a shared-entity source), `url_verifier.py` fetch/value-match (host-block is live).
 - ✅ **China under-merge** (review workbook shipped): `build_china_undermerge_review.py` reconciles
-  the 101 china-tracker rows vs the non-tracker China master rows and emits
+  the 101 china-tracker rows vs the non-tracker China main rows and emits
   `batches/refineries_china_undermerge_<stamp>.xlsx` — per-teapot merge candidates for Baird to
   collapse by hand. Key: the tracker's own `RMIFacilityName` column (the teapot→RMI plant-name
   bridge) lives ONLY in the live "…- main" export, not the registered "…for RMI" one, so the
   script reads `data/china_gem_main_tracker.xlsx` for it. Which teapots are still solo is read
-  from the master's own **`china_id` column** (a clean 1:1 record of the china_rmi_tracker
-  source_id in each cluster), NOT `id_crosswalk.json`. Against master `1416`: **61 teapots are
+  from the main's own **`china_id` column** (a clean 1:1 record of the china_rmi_tracker
+  source_id in each cluster), NOT `id_crosswalk.json`. Against main `1416`: **61 teapots are
   already merged** (Climate TRACE coords folded them in — resolved, listed in an Already_merged
   sheet, no action) and **40 are solo** (the genuine under-merge surface); of the 40 solo, 25 get
   a candidate (14 high-confidence via the RMIname bridge) and 15 have none. Proximity-only pairs
@@ -123,9 +123,9 @@ Baird applies by hand.
   source (anchor order rmi > ogj > ogim > china_rmi_tracker > eia > climate_trace > india_ppac >
   brazil_anp). So a teapot that merged under an RMI/OGJ anchor (e.g. Hengli Dalian, Sinochem
   Quanzhou, Shenghong Lianyungang) legitimately has no `china_rmi_tracker:` key — it's already
-  merged, not missing. To map every per-source id to its master row, use the master's per-source
+  merged, not missing. To map every per-source id to its main row, use the main's per-source
   id columns (`china_id`, `rmi_refine_id`, `ogj_id`, …), which are complete and 1:1.
-- ☐ Review the `possible` pairs (`data/master_*.possible.parquet`, now 1258) to tune thresholds
+- ☐ Review the `possible` pairs (`data/main_*.possible.parquet`, now 1258) to tune thresholds
   — the count grew with the added sources; watch for climate_trace/eia US near-duplicates.
 - ☐ **Phase B scope pass**: set `InScope`/`ScopeReason` per the open scope-boundary decisions above.
 - ☐ First reviewable batch xlsx (needs `build_review_package.py`).

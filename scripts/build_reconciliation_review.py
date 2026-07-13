@@ -1,21 +1,21 @@
-"""Build a reconciliation review workbook: one registered source vs the current master.
+"""Build a reconciliation review workbook: one registered source vs the current main.
 
     python scripts/build_reconciliation_review.py --source eia
     python scripts/build_reconciliation_review.py --source eia --out batches/refineries_eia_reconciliation_<stamp>.xlsx
 
-Reads the source->master match (batches/staging/match_<source>/matches.parquet — run
-`scripts/match.py --source <source> --against master` first), the source canonical, and
-the latest master. Reduces the coordinate-pass fan-out (one source refinery can match
-several nearby master rows in dense clusters) to ONE best match per source row (nearest,
+Reads the source->main match (batches/staging/match_<source>/matches.parquet — run
+`scripts/match.py --source <source> --against main` first), the source canonical, and
+the latest main. Reduces the coordinate-pass fan-out (one source refinery can match
+several nearby main rows in dense clusters) to ONE best match per source row (nearest,
 then highest capacity agreement), and surfaces:
 
-  - <SRC>_to_master  — best match per source row, with a capacity-conflict flag
-  - Master_dedup     — source rows that matched >1 master row = master under-merge clusters
+  - <SRC>_to_main  — best match per source row, with a capacity-conflict flag
+  - Main_dedup     — source rows that matched >1 main row = main under-merge clusters
   - <SRC>_only       — source rows with no match = discovery candidates
   - Possible         — `possible`-labelled pairs for manual review
 
 This is a REVIEW deliverable — never an applied edit (the agent never overwrites the
-master). Per standing rule the internal RefineryID is NOT emitted; master rows are
+main). Per standing rule the internal RefineryID is NOT emitted; main rows are
 identified by name + city + state + capacity + SourcesPresent. See docs/sops/reconciliation.md.
 """
 
@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from paths import latest_master, BATCHES
+from paths import latest_main, BATCHES
 
 try:
     import pandas as pd
@@ -49,14 +49,14 @@ def main() -> None:
     ap.add_argument("--out")
     args = ap.parse_args()
 
-    mp = latest_master()
+    mp = latest_main()
     if mp is None:
-        sys.exit("No master yet (data/master_*.parquet).")
-    stamp = mp.stem[len("master_"):]
+        sys.exit("No main yet (data/main_*.parquet).")
+    stamp = mp.stem[len("main_"):]
 
     match_path = Path(f"batches/staging/match_{args.source}/matches.parquet")
     if not match_path.exists():
-        sys.exit(f"No matches at {match_path} — run scripts/match.py --source {args.source} --against master first")
+        sys.exit(f"No matches at {match_path} — run scripts/match.py --source {args.source} --against main first")
 
     pairs = pd.read_parquet(match_path)
     src = pd.read_parquet(Path("sources") / args.source / "canonical.parquet").set_index("source_id")
@@ -70,9 +70,9 @@ def main() -> None:
         if b is None:
             return {}
         return {
-            "master_name": b.get("RefineryName"), "master_city": b.get("City"),
-            "master_state": b.get("Subnational"), "master_cap_kbpd": _f(b.get("CapacityInKbpd")),
-            "master_status": b.get("Status"), "master_sources": b.get("SourcesPresent"),
+            "main_name": b.get("RefineryName"), "main_city": b.get("City"),
+            "main_state": b.get("Subnational"), "main_cap_kbpd": _f(b.get("CapacityInKbpd")),
+            "main_status": b.get("Status"), "main_sources": b.get("SourcesPresent"),
         }
 
     def s_ident(sid) -> dict:
@@ -88,30 +88,30 @@ def main() -> None:
     matches = pairs[pairs.label == "match"].copy()
     possibles = pairs[pairs.label == "possible"].copy()
 
-    # best master match per source row: nearest (NaN distance last), then highest cap agreement
+    # best main match per source row: nearest (NaN distance last), then highest cap agreement
     matches["_d"] = matches["dist_km"].map(lambda v: _f(v) if _f(v) is not None else 1e9)
     matches["_c"] = matches["cap_ratio"].map(lambda v: _f(v) or 0.0)
     matches = matches.sort_values(["a_id", "_d", "_c"], ascending=[True, True, False])
     best = matches.drop_duplicates("a_id", keep="first")
-    n_master = matches.groupby("a_id")["b_id"].nunique()
+    n_main = matches.groupby("a_id")["b_id"].nunique()
 
-    # --- <SRC>_to_master: one row per matched source refinery ---
+    # --- <SRC>_to_main: one row per matched source refinery ---
     recon = []
     for _, r in best.iterrows():
         row = {**s_ident(r["a_id"]), "match_dist_km": _f(r["dist_km"]),
                "name_score": _f(r["name"]), "cap_ratio": _f(r["cap_ratio"]), **m_ident(r["b_id"])}
         cr = _f(r["cap_ratio"])
-        row["cap_flag"] = "conflict" if (cr is not None and cr < CAP_CONFLICT) else ("ok" if cr else "no_master_cap")
-        row["n_other_master_nearby"] = int(n_master.get(r["a_id"], 1) - 1)
+        row["cap_flag"] = "conflict" if (cr is not None and cr < CAP_CONFLICT) else ("ok" if cr else "no_main_cap")
+        row["n_other_main_nearby"] = int(n_main.get(r["a_id"], 1) - 1)
         row["Decision"], row["Notes"] = None, None
         recon.append(row)
     recon = pd.DataFrame(recon)
     if len(recon):   # a capacity-gated source (e.g. irs_rcn) can yield 0 matches -> empty
         recon = recon.sort_values([f"{args.source}_state", f"{args.source}_city"]).reset_index(drop=True)
 
-    # --- Master_dedup: source rows matching >1 master row (under-merge clusters) ---
+    # --- Main_dedup: source rows matching >1 main row (under-merge clusters) ---
     dedup = []
-    multi_ids = [aid for aid, n in n_master.items() if n > 1]
+    multi_ids = [aid for aid, n in n_main.items() if n > 1]
     for aid in multi_ids:
         s = s_ident(aid)
         for _, r in matches[matches.a_id == aid].iterrows():
@@ -141,23 +141,23 @@ def main() -> None:
 
     summary = pd.DataFrame([
         ("source", args.source),
-        ("master", mp.name),
+        ("main", mp.name),
         (f"{args.source} rows (in scope)", len(src)),
-        ("matched to master", len(best)),
+        ("matched to main", len(best)),
         (f"{args.source}-only (discovery)", len(only)),
         ("capacity conflicts (matched, ratio<%.2f)" % CAP_CONFLICT,
          int((recon["cap_flag"] == "conflict").sum()) if len(recon) else 0),
-        ("source rows hitting >1 master row (dedup clusters)", len(multi_ids)),
-        ("master rows tangled in those clusters", dedup["master_name"].nunique() if len(dedup) else 0),
+        ("source rows hitting >1 main row (dedup clusters)", len(multi_ids)),
+        ("main rows tangled in those clusters", dedup["main_name"].nunique() if len(dedup) else 0),
         ("possible pairs", len(poss)),
     ], columns=["metric", "value"])
 
     out = Path(args.out) if args.out else BATCHES / f"refineries_{args.source}_reconciliation_{stamp}.xlsx"
     with pd.ExcelWriter(out, engine="openpyxl") as xw:
         summary.to_excel(xw, sheet_name="Summary", index=False)
-        recon.to_excel(xw, sheet_name=f"{args.source}_to_master", index=False)
+        recon.to_excel(xw, sheet_name=f"{args.source}_to_main", index=False)
         if len(dedup):
-            dedup.to_excel(xw, sheet_name="Master_dedup", index=False)
+            dedup.to_excel(xw, sheet_name="Main_dedup", index=False)
         if len(only):
             only.to_excel(xw, sheet_name=f"{args.source}_only", index=False)
         if len(poss):

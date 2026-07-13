@@ -18,21 +18,21 @@ Repeat per source. Registered: `rmi`, `ogj`, `ogim`, `china_rmi_tracker`, `eia`,
 `india_ppac`, `brazil_anp`, `climate_trace`, `irs_rcn`. Confirm capacity units resolved
 correctly — especially any tonnes/万吨/`'000 MT` source.
 
-## §2 Build / refresh the master  (greenfield)  — SOP: `sops/build.md`
+## §2 Build / refresh the main  (greenfield)  — SOP: `sops/build.md`
 
 ```bash
 # merge the 8 mergeable sources (irs_rcn is overlay-only — never in --sources)
 python scripts/merge.py \
     --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace \
-    --out data/master_<stamp>.parquet
-python scripts/export_master.py            # -> batches/refineries_master_<stamp>_worldwide_export.xlsx
+    --out data/main_<stamp>.parquet
+python scripts/export_main.py            # -> batches/refineries_main_<stamp>_worldwide_export.xlsx
 python scripts/export_possible_review.py   # -> batches/refineries_possible_review_<stamp>.xlsx
 ```
 The build clusters the same physical refinery across sources (match.py), assigns stable
 `RefineryID`s (via `data/id_crosswalk.json`, so ids survive rebuilds), fills crosswalk ids +
 `SourcesPresent`, picks each field's value by per-field source priority, and routes
-cross-source disagreements to `master_<stamp>.conflicts.parquet` (not silently resolved).
-No `[ref]`s are filled here. `export_master.py` writes the reviewable worldwide xlsx;
+cross-source disagreements to `main_<stamp>.conflicts.parquet` (not silently resolved).
+No `[ref]`s are filled here. `export_main.py` writes the reviewable worldwide xlsx;
 `export_possible_review.py` writes the non-clustered `possible` pairs for threshold tuning.
 
 ## §3 Update existing refineries  (maintenance)  — SOP: `sops/update.md`
@@ -57,11 +57,11 @@ clusters in one country.
 ## §5 Reconcile vs a background dataset  — SOP: `sops/reconciliation.md`
 
 ```bash
-python scripts/match.py --source ogj --against master --out batches/staging/recon_ogj_<run>/
+python scripts/match.py --source ogj --against main --out batches/staging/recon_ogj_<run>/
 python scripts/build_review_package.py --staging batches/staging/recon_ogj_<run>/ \
     --output batches/refineries_batch_<stamp>_<scope>_reconciliation.xlsx
 ```
-Same matcher as build, single source vs the master. Findings are candidates for Update,
+Same matcher as build, single source vs the main. Findings are candidates for Update,
 never auto-applied.
 
 ## §6 Triage (plan the batch; memo)  — SOP: `sops/triage.md`
