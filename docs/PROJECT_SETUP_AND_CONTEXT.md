@@ -60,10 +60,28 @@ Baird applies by hand.
   First union master: **1404 → 1060 rows**, 293 multi-source, 193 conflicts, IDs `R####` with
   `data/id_crosswalk.json`. Every row `InScope=unknown` (superset-first; scope is Phase B).
 - ⛏ `entity_lookup.py` / `url_verifier.py` / `build_review_package.py` — still skeletons.
-- ☐ **A4 dedup follow-ups**: (1) China under-merge — 196 China rows; china↔rmi matched only 8
-  despite the tracker's `Is_In_RMI_20230508` flag → use the flag + looser China blocking.
-  (2) 55 country-less OGJ-Europe rows → reverse-geocode Country/ISO3 from coords.
-  (3) Register the **worldwide OGJ** (WW Refining PDF, ~700) as its own source; current `ogj` is Europe-only.
-  (4) Review the 271 `possible` pairs (`data/master_*.possible.parquet`) to tune thresholds.
+- ☐ **A4 dedup follow-ups**:
+  (1) China under-merge — diagnosed: the `Is_In_RMI_20230508` flag marks 43 china-tracker
+  rows as RMI duplicates but only 9 merge (china uses *company* names, RMI uses *plant*
+  names → pairs land in `possible`). Coordinates can't safely finish it: only 15/43 have any
+  RMI neighbor ≤15 km and the nearest-neighbor pairs include clear false matches (dense
+  Shandong/Dongying teapot parks). Needs a review worksheet or a name/capacity assignment,
+  not proximity auto-merge. STILL OPEN.
+  (2)+(3) ✅ **OGJ rebuilt from the WW Refining PDF** (`sources/ogj/adapter.py`, replaces the
+  Europe-only map JSON now in `adapter_mapjson.py`): 577 refineries, 105 countries, country on
+  EVERY row (fixes the 55 country-less), Crude b/cd → kbpd. Reconciles with PDF section
+  Totals except 3 documented PDF quirks. Trade-off: **no coordinates**.
+  ✅ **Coordless-blocking solved** (Baird chose greedy 1:1 + capacity). `match.py` now has a
+  second, COUNTRY-blocked pass for pairs the coord pass can't reach (≥1 side coordless).
+  Within a country, `token_set_ratio` pins to ~1.0 for every same-city row (a short source
+  name is a token-subset of OGJ's long `owner—operator—city` string), so **name can't
+  separate refineries in one city — capacity is the discriminator.** The pass scores each
+  pair on a `0.6*name + 0.4*capacity` composite and runs a **greedy 1:1 assignment** (each
+  row on both sides matched at most once); `match` requires a capacity gate (`_country_labels`:
+  name≥0.85 & cap≥0.90, or name≥0.72 & cap≥0.95). Unmatched OGJ rows keep surviving candidates
+  as `possible` (review queue). Fan-out is structurally 0. `china_rmi_tracker` had no Country
+  column → added `defaults: {country: China, iso3: CHN}` (new generic `defaults:` block in
+  `ingest.py`). OGJ dedup counts (match/possible): rmi 162/136, ogim 220/299, china 4/13.
+  (4) Review the `possible` pairs (`data/master_*.possible.parquet`) to tune thresholds.
 - ☐ **Phase B scope pass**: set `InScope`/`ScopeReason` per the open scope-boundary decisions above.
 - ☐ First reviewable batch xlsx (needs `build_review_package.py`).

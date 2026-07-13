@@ -110,12 +110,18 @@ def finalize(rows: list[dict], manifest: dict) -> "pd.DataFrame":
     config_map = {str(k): v for k, v in (manifest.get("configuration_map") or {}).items()}
     default_units = manifest.get("capacity_units")
     year_sentinels = {int(y) for y in (manifest.get("start_year_sentinels") or [1900])}
+    # Constant fills for a scoped source (e.g. a China-only tracker with no Country column):
+    # any canonical field named here is set when the row leaves it null.
+    defaults = manifest.get("defaults") or {}
 
     out = []
     for row in rows:
         rec = {f: row.get(f) for f in CANONICAL_FIELDS}
         rec["source"] = name
         rec["source_tier"] = tier
+        for f, v in defaults.items():
+            if rec.get(f) is None or (isinstance(rec.get(f), float) and pd.isna(rec.get(f))):
+                rec[f] = v
         # status / configuration vocab mapping
         if rec.get("status") is not None:
             rec["status"] = status_map.get(str(rec["status"]).strip().lower(), rec["status"])

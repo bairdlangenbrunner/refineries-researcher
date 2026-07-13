@@ -17,7 +17,14 @@ timestamp). Baird reviews it and applies edits to the master manually.
 
 Depends on mode; the leading sheet is always a **1:1 mirror of the relevant master rows**
 in schema column order (see `gem_schema.md`), current values prefilled, with overlays only
-on touched cells. Typical sheets:
+on touched cells.
+
+**Do not emit the internal `RefineryID` (`R####`) column in review xlsx outputs.** It's an
+internal crosswalk key (kept in `data/id_crosswalk.json` and the master parquet), not a
+review field — Baird doesn't want it cluttering deliverables. Keep the source ID columns
+(`rmi_refine_id`, `ogj_id`, `ogim_id`, `china_id`) and `SourcesPresent` for provenance.
+
+Typical sheets:
 
 - `master_mirror` / `<mode>_edits` — the rows to change, in schema order, `SheetRow`-keyed.
 - `new_refineries` — proposed new records (discovery/build).

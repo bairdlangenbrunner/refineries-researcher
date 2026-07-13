@@ -17,6 +17,12 @@ location:
 
 id_field: "RefineryID"
 
+# China-only tracker with no Country column — stamp it so rows carry a blocking key
+# (match.py blocks the coordless OGJ on country) and a real country in the master.
+defaults:
+  country: "China"
+  iso3: "CHN"
+
 # Already close to the GEM schema; map its columns straight to canonical:
 column_map:
   source_id:      "RefineryID"

@@ -1,0 +1,34 @@
+name: irs_rcn
+description: >
+  IRS "Active Fuel Refineries" registry — the Refiner Control Number (RCN) database, the
+  SB/SE list of facilities registered as refiners under IRC §4101 (Form 637 activity "S").
+  US-only (~227 rows). A PRIMARY government registry: authoritative for a US facility's
+  EXISTENCE, operator name, and street address, and a discovery signal for small/independent
+  US refineries. Carries NO capacity, coordinates, status, or configuration.
+source_tier: 1          # primary US-government source (for the identity/location fields it has)
+citable: true           # real IRS publication; still re-verify the specific claimed value + URL
+
+format: pdf             # parsed by adapter.py (pdfplumber, column-x0 segmentation)
+adapter: adapter.py
+location:
+  url: "https://www.irs.gov/pub/irs-sbse/rcn-db.pdf"
+  file_path: "data/irs_rcn_db.pdf"   # gitignored; re-download from url before ingest
+
+id_field: "source_id"   # the RCN, e.g. R-00-TX-0247 (encodes the state in chars 6-7)
+
+# Adapter emits canonical fields directly (country=United States, iso3=USA, subnational=
+# full state name from the RCN, city, name). No column_map / capacity_units needed.
+
+notes: >
+  ⚠ SCOPE TRAP: "fuel refinery" is the TAX definition, MUCH broader than a crude-oil
+  refinery. The list mixes in gas plants, NGL fractionators (Enterprise Mont Belvieu),
+  transmix processors (Kinder Morgan Transmix), renewable-diesel/biodiesel plants (Diamond
+  Green Diesel, Seaboard Energy, Montana Renewables), an LNG plant (FLNG Liquefaction), and
+  petrochemical units (Raven Butene-1) alongside genuine crude refineries (Petromax, Lazarus,
+  Calcasieu). Ingest is superset-first and does NOT filter — scope triage happens downstream.
+  Because this source has no capacity, the country-blocked matcher (which gates matches on
+  capacity) can NEVER auto-match an IRS row; every IRS pair lands in `possible` for review.
+  So treat irs_rcn as a US reconciliation/discovery overlay, not an auto-merge dedup source.
+  Snapshot vintage is in the PDF title ("Active Fuel Refineries @ M/D/YYYY"); re-download to
+  refresh. "Active" = active IRS registration, NOT operational status — never map it to a
+  `Status` value.

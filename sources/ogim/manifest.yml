@@ -41,9 +41,13 @@ status_map:
 start_year_sentinels: [1900]
 
 notes: >
-  Also present but NOT in the canonical schema: LIQ_THROUGHPUT_BPD (throughput basis —
-  keep for the Phase B design-vs-throughput comparison), COMMODITY, FAC_TYPE, CATEGORY,
-  ON_OFFSHORE, NUM_STORAGE_TANKS. CATEGORY/COMMODITY/FAC_TYPE are useful SCOPE signals.
-  SRC_REF_ID resolves against OGIM's Data_Catalog layer / Data_Source_References PDF — so
-  OGIM is corroboration for LOCATION; chase the named upstream source for citations.
-  Names are UPPERCASE (e.g. GHAZANFAR OIL REFINERY) — normalize case in the matcher.
+  FAC_NAME is often the CITY/place, not the refinery's proper name (e.g. 4 distinct
+  "ANTWERP" rows at 4 coords/capacities; "SKIKDA", "GOTHENBURG") — so OGIM names are
+  low-quality and always lose the RefineryName tie to rmi/ogj/china; match on coords.
+  LIQ_THROUGHPUT_BPD is 100% -999 (empty) — NO design-vs-throughput cross-check is
+  possible from this layer; only LIQ_CAPACITY_BPD (design, 600/692 real) is usable.
+  Not in canonical: FAC_TYPE/COMMODITY/ON_OFFSHORE/FAC_STATUS/NUM_STORAGE_TANKS
+  (NUM_STORAGE_TANKS all 0). FAC_TYPE flags a few scope oddities (2 asphalt refineries,
+  1 upgrader, 1 shale unit, 1 lubricants); ON_OFFSHORE is unreliable (tags Rotterdam/Lake
+  Charles "OFFSHORE"). SRC_REF_ID = one of only 27 catalog IDs (not URLs) → OGIM is
+  LOCATION corroboration; chase the named upstream source for citations.

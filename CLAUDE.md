@@ -119,6 +119,12 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 - **ogim** — OGIM v2.7 refineries layer (GIS). Location/coordinate corroboration. Tier 2.
 - **china_rmi_tracker** — GEM's own China Independent Oil Refinery Tracker for RMI.
   **Schema template + China seed** — but GEM-authored, so **seed data, never a citation.**
+- **irs_rcn** — IRS "Active Fuel Refineries" (Refiner Control Number) registry, US-only, Tier 1
+  primary gov source. ⚠ Tax definition (§4101), broader than crude-only — ~half is gas/NGL/
+  biodiesel/LNG/petchem. No capacity/coords → never auto-matches. **RULING (Baird): OVERLAY
+  ONLY — keep it registered + ingested, but NEVER merge into the master.** Its sole use is the
+  US reconciliation/discovery review workbook (`batches/refineries_irs_reconciliation_*.xlsx`);
+  crude candidates are worked by hand, out-of-scope rows stay flagged.
 
 ---
 
@@ -180,6 +186,8 @@ python scripts/ingest.py --source rmi   --out sources/rmi/canonical.parquet
 python scripts/ingest.py --source ogj   --out sources/ogj/canonical.parquet
 python scripts/match.py   --against master --source ogj --out batches/staging/match_ogj/
 python scripts/merge.py   --sources rmi,ogj,ogim,china_rmi_tracker --out data/master_<stamp>.parquet
+python scripts/export_master.py                 # latest master -> batches/refineries_master_<stamp>_worldwide_export.xlsx (drops RefineryID)
+python scripts/export_possible_review.py        # latest master's possible pairs -> batches/refineries_possible_review_<stamp>.xlsx
 python scripts/build_review_package.py --staging batches/staging/<run>/ \
     --output batches/refineries_batch_<stamp>_<scope>_<mode>.xlsx   # <stamp>: TZ=America/New_York date "+%Y%m%d_%H%M_ET"
 pip install -r requirements.txt

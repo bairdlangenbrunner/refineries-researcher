@@ -88,6 +88,8 @@ def ordered_columns() -> list[str]:
 
 
 def latest_master() -> Path | None:
-    """Most recent data/master_*.parquet, or None if the master doesn't exist yet."""
-    candidates = sorted(DATA.glob("master_*.parquet"))
+    """Most recent data/master_<stamp>.parquet, or None if the master doesn't exist yet.
+    Excludes the sidecar outputs (master_<stamp>.possible.parquet / .conflicts.parquet),
+    whose stems carry a second dot — otherwise `.possible` sorts last and gets picked."""
+    candidates = sorted(p for p in DATA.glob("master_*.parquet") if "." not in p.stem)
     return candidates[-1] if candidates else None

@@ -1,47 +1,32 @@
 name: ogj
 description: >
-  Oil & Gas Journal Worldwide Refining survey. Industry-standard annual dataset. Two
-  artifacts: a year-keyed interactive-map JSON export, and the WW Refining PDF + an
-  extraction notebook. Carries capacity in BOTH kbbl/cd and Mt/a — useful for the
-  tonnes<->barrels cross-check.
+  Oil & Gas Journal Worldwide Refining survey (2022). Industry-standard annual dataset.
+  Ingested from the WW Refining PDF via adapter.py: worldwide (~577 refineries, 105
+  countries), every row carries a country + Crude distillation capacity (b/cd = kbpd).
+  This supersedes the Europe-only interactive-map JSON (preserved as adapter_mapjson.py),
+  which had coordinates but no country. Trade-off: the PDF has NO coordinates.
 source_tier: 2
 citable: true           # OGJ is a real publication; still re-verify each value/URL before staging
 
-format: json            # the map JSON; the PDF path is a fallback via adapter
-adapter: adapter.py     # map JSON is a nonstandard {year: {map: [ {B:..,F:..,H:..,K:..,name,position} ]}} shape
+format: pdf             # parsed by adapter.py (pdfplumber); not a generic loader format
+adapter: adapter.py     # WW Refining PDF: country sections + wrapped names + 33 unit columns
 location:
-  sibling_path: "../refineries-tracker/refineries.json"     # year-keyed map export
-  # PDF fallback: ../refineries-tracker/refineries-data-230100OGJ_WWRefining___.63d818a0b093b.pdf
-  #   + extraction notebook ../refineries-tracker/extract-refineries-from-PDF-table.ipynb
+  sibling_path: "../refineries-tracker/refineries-data-230100OGJ_WWRefining___.63d818a0b093b.pdf"
+  # Europe map JSON (coords, no country) — superseded: ../refineries-tracker/refineries.json
+  #   parse it with adapter_mapjson.py if coordinate enrichment is wired up.
 
-id_field: "id"          # the map JSON gives each point a short id (e.g. "ayuwnn")
+id_field: "source_id"   # adapter synthesizes deterministic ids: <ISO3>-NN (per-country seq)
 
-# Map JSON per-point keys are letter-coded; the adapter resolves them:
-#   B -> "Owners: <x>"   F -> "Primary capacity(kbbl/cd): <x>"
-#   H -> "Primary capacity(Mt/a): <x>"   K -> "Status: <x>"
-#   name, position:[lat,lon], active
-column_map:
-  source_id:      "id"
-  name:           "name"
-  owner:          "B"
-  capacity_value: "F"          # kbbl/cd == kbpd
-  status:         "K"
-  latitude:       "position.0"
-  longitude:      "position.1"
-
-capacity_units: "kbpd"         # F is already kbbl/cd; adapter also records the Mt/a value for the cross-check
-
-status_map:
-  Operational: "operating"
-  Operating:   "operating"
-  Idle:        "idle"
-  Mothballed:  "mothballed"
-  Shut:        "mothballed"
-  Closed:      "mothballed"   # judgment call: many EU "Closed" sites are permanent — revisit in scope pass
-  Planned:     "proposed"
-  "Under construction": "construction"
+# The adapter emits canonical fields directly (no column_map needed): country/iso3/
+# subnational (US state, CA province), city + owner split from the em-dash name segments,
+# capacity_value = Crude b/cd, capacity_units = bpd. No coords/status/start_year in the PDF.
+capacity_units: "bpd"   # Crude column is barrels/calendar-day; ingest normalizes to kbpd
 
 notes: >
-  Take the LATEST year block in the JSON unless told otherwise. position is [lat, lon]
-  (NOT WKT lon-first). The Mt/a value (key H) should equal F/20.08 — a large mismatch
-  flags a source typo; the adapter emits both so match.py can catch it.
+  Countries are ALL-CAPS section headers matched EXACTLY against the country table (fuzzy
+  matching would map wrapped company fragments like 'PJSC' to countries). Taiwan is labeled
+  'CHINA (TAIWAN)'. Parsed Crude sums reconcile with the PDF's per-section Total lines
+  except three documented PDF-internal quirks (China ZPC two-phase; South Africa Natref
+  CTL; India 1-bpd rounding). The full downstream-unit breakdown (vacuum, cracking,
+  reforming, hydrotreating, etc.) is available in the PDF for a future configuration/Nelson
+  derivation but is not yet extracted.
