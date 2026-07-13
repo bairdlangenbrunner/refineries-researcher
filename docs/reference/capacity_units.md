@@ -19,6 +19,8 @@ happen in kbpd.
 | `Mt/a`, `Mtpa`, `Mt/y` | **million metric tonnes**/year of crude | × **20.08** |
 | `万吨/a`, `万吨/年`, `tttpa` | **10,000 metric tonnes**/year (Chinese unit) | × **0.2008** |
 | `t/a`, `tpa` | metric tonnes/year | × 2.008e-5 |
+| `m3/d`, `m³/dia` | cubic metres/day (Brazil ANP) | × **6.290** ÷ 1,000 |
+| `m3/a`, `m³/ano` | cubic metres/year | × 6.290 ÷ 365 ÷ 1,000 |
 
 ### The tonnes→barrels factor
 
@@ -45,6 +47,14 @@ Rule: any Chinese-sourced refinery capacity in "万吨" or a `tttpa`-style label
 10,000-tonne units. When `CapacityUnits` is ambiguous on a tonnes basis, **confirm the
 unit before converting** and flag it in `Notes`. This is the single most common capacity
 error in refinery data — escalate a whole class of suspicious tonnes values to Baird.
+
+### Volume vs mass units
+
+Brazil's ANP reports refining capacity as a **volume rate** (m³/day or bbl/day), not a mass
+rate, so no density assumption is needed — `1 m³ = 6.28981 bbl` is exact. Do **not** apply the
+7.33 bbl/tonne factor to a cubic-metre figure. India's PPAC reports **MMTPA** (million tonnes/
+year of crude) → use the `Mt/a` conversion (×20.08). Keep each source's native unit in
+`CapacityUnits` and let `capacity_normalize.to_kbpd` do the conversion.
 
 ## Estimated capacity
 

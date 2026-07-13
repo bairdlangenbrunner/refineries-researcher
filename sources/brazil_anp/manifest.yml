@@ -1,0 +1,33 @@
+name: brazil_anp
+description: >
+  Brazil ANP "Capacidade de refino" — the per-refinery nominal-capacity table (2.29) from
+  the ANP Anuário Estatístico 2025 dados-abertos CSV, as of 31/12/2024. 19 refineries.
+  ANP is Brazil's petroleum regulator (primary official source); Brazil-only national anchor,
+  and useful for post-Petrobras-divestiture coverage of the small/private refineries.
+source_tier: 1          # national regulator, primary official source
+citable: true           # federal open data (Decreto 8.777/2016), not a GEM surface; re-verify each value/URL
+
+format: csv             # ;-separated, utf-8-sig, comma decimal — needs the adapter's parse settings
+adapter: adapter.py
+location:
+  url: "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos/anuario-estatistico-2025/secao-2/anuario-2025-dados_abertos-tabela2-29.csv"
+  file_path: "sources/brazil_anp/data/anp_tabela2-29_capacidade_refino_2024.csv"   # gitignored; re-download to refresh
+  page: "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/anuario/anuario-estatistico-2025-dados-abertos"
+
+id_field: "source_id"   # adapter synthesizes ANP-NN (row order)
+
+# Adapter emits canonical fields directly. Capacity is barrels/day -> units 'bpd', /1000 = kbpd.
+# start_year comes from INÍCIO DE OPERAÇÃO. No status_map, no coords.
+capacity_units: "bpd"
+
+notes: >
+  ⚠ UNIT is barrels/day (NOT m³/dia — the metadata dictionary says "Capacidade Nominal em barril
+  por dia"). REPLAN/Paulínia 433,996 bbl/d = 434 kbpd. CSV is UTF-8 with BOM (read utf-8-sig),
+  ;-separated, comma as decimal. NO operator column (owner is implicit in the refinery name;
+  post-divestiture operators like Acelen for Refmat/Mataripe are NOT here — enrich ownership from
+  the ANP "Autorizações para refino" Power BI dashboard or by hand). No coordinates (geocode from
+  OGIM/OGJ). No status column. 'Paraná Xisto' (Petrobras SIX) is an oil-SHALE plant at 0 crude
+  bbl/d — SCOPE-BOUNDARY (unconventional, not crude distillation); emitted with null capacity and
+  flagged for a ruling, not dropped. Rnest/Abreu e Lima nominal 115,009 bbl/d but authorized to
+  process only 100,008 (2016 state license) — a Notes item for reconciliation. Coordless → dedups
+  via the country-blocked greedy-1:1 path in match.py.

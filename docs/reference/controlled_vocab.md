@@ -46,5 +46,12 @@ Coordinate precision: `exact` | `approximate`.
 Log here every ambiguous inclusion/exclusion ruling so it's consistent across batches
 (see CLAUDE.md "Scope of the database"). Format: `<date> — <case> — <ruling> — <rationale>`.
 
-- _(none yet — greenfield; e.g. condensate splitters, topping/mini plants, mothballed-then-
-  demolished, associated-vs-standalone petrochem all need rulings as they arise)_
+- 2026-07-13 — asphalt refineries that distil crude (e.g. Talley Asphalt, Kern CA, 1.7 kbpd
+  in EIA) — **IN SCOPE** (keep) — they run atmospheric crude distillation, so they are crude
+  refineries regardless of small size or asphalt-heavy product slate. Small size alone is not
+  an exclusion. (Standalone asphalt *blending/oxidizing* plants with no crude distillation stay
+  out, same rule as petchem-only sites.)
+- 2026-07-13 — EIA downstream-only sites with no atmospheric crude distillation (petchem/lube/
+  NGL: Equistar Channelview, Excel Paralubes, Trecora, Pasadena Performance, Enterprise & Targa
+  Mont Belvieu) — **OUT OF SCOPE** — no crude distillation = not a crude refinery. The eia
+  adapter excludes them at ingest.

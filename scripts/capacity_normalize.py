@@ -13,6 +13,7 @@ from __future__ import annotations
 
 BBL_PER_TONNE = 7.33
 KBPD_PER_MTPA = BBL_PER_TONNE * 1_000_000 / 365 / 1000  # ≈ 20.082
+BBL_PER_M3 = 6.28981                                    # 1 m³ = 6.28981 bbl (1 bbl = 0.158987 m³)
 
 # Normalize unit strings to a canonical key. Extend as new source labels appear.
 _UNIT_ALIASES = {
@@ -21,6 +22,13 @@ _UNIT_ALIASES = {
     "mt/a": "Mt/a", "mtpa": "Mt/a", "mt/y": "Mt/a", "mt/yr": "Mt/a",
     "万吨/a": "wan_t/a", "万吨/年": "wan_t/a", "wan_t/a": "wan_t/a", "tttpa": "wan_t/a",
     "t/a": "t/a", "tpa": "t/a", "t/yr": "t/a", "tonnes/year": "t/a",
+    # thousand tonnes/year (India PPAC publishes '000 MT)
+    "kt/a": "kt/a", "kt/yr": "kt/a", "kt/y": "kt/a", "kilotonnes/year": "kt/a",
+    "'000mt": "kt/a", "000mt": "kt/a", "'000mt/a": "kt/a", "thousandmt": "kt/a",
+    # volume/day (Brazil ANP reports crude throughput in m³/day; also m³/year)
+    "m3/d": "m3/d", "m³/d": "m3/d", "m3/dia": "m3/d", "m³/dia": "m3/d",
+    "m3/day": "m3/d", "m³/day": "m3/d",
+    "m3/a": "m3/a", "m³/a": "m3/a", "m3/ano": "m3/a", "m³/ano": "m3/a", "m3/yr": "m3/a",
 }
 
 # Multiplier from canonical unit -> kbpd
@@ -29,7 +37,10 @@ _TO_KBPD = {
     "kbpd": 1.0,
     "Mt/a": KBPD_PER_MTPA,
     "wan_t/a": KBPD_PER_MTPA / 100,   # 万吨 = 1e4 t = 0.01 Mt
+    "kt/a": KBPD_PER_MTPA / 1000,     # 1e3 t = 0.001 Mt  (India PPAC '000 MT)
     "t/a": KBPD_PER_MTPA / 1_000_000,
+    "m3/d": BBL_PER_M3 / 1000,        # m³/day -> kbpd
+    "m3/a": BBL_PER_M3 / 365 / 1000,  # m³/year -> kbpd
 }
 
 
@@ -72,6 +83,7 @@ if __name__ == "__main__":
         (750, "tttpa", 150.6),         # GEM China Dongming: 750 万吨/a
         (3.4, "Mt/a", 68.28),          # OGJ Fredericia (~68 kbbl/cd)
         (106.4, "kbpd", 106.4),        # already kbpd
+        (69000, "m3/d", 434.0),        # Brazil REPLAN/Paulínia ~69,000 m³/d ≈ 434 kbpd
     ]
     for val, unit, expect in checks:
         got = to_kbpd(val, unit)

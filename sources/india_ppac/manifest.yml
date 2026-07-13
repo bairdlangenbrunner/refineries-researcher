@@ -1,0 +1,31 @@
+name: india_ppac
+description: >
+  India PPAC "Installed Refining Capacity" — the Petroleum Planning & Analysis Cell
+  (Ministry of Petroleum & Natural Gas, Govt of India) per-refinery capacity snapshot,
+  as of 1 April 2025. 23 refineries. Primary government source for India (PPAC compiles
+  operator-reported figures); India-only national anchor.
+source_tier: 1          # primary government statistics office
+citable: true           # official .gov.in publication, not a GEM surface; re-verify each value/URL
+
+format: xlsx            # single sheet, but merged company cells + total/footnote rows need the adapter
+adapter: adapter.py
+location:
+  url: "https://ppac.gov.in/uploads/page-images/1750073245_Refining-capacity-April-2025.xlsx"
+  file_path: "sources/india_ppac/data/refining_capacity_apr2025.xlsx"   # gitignored; re-download to refresh
+  page: "https://ppac.gov.in/infrastructure/installed-refinery-capacity"
+
+id_field: "source_id"   # adapter synthesizes PPAC-NN (row order)
+
+# Adapter emits canonical fields directly. Capacity is '000 MT (thousand tonnes/yr) -> units
+# 'kt/a', normalized by capacity_normalize (kt/a x 0.02008 = kbpd). No status_map, no coords.
+capacity_units: "kt/a"
+
+notes: >
+  ⚠ UNIT is '000 MT (thousand metric tonnes/yr of crude), NOT MMTPA and NOT barrels — the raw
+  value is 1000x the MMTPA figure (Panipat 15000 = 15 MMTPA ≈ 301 kbpd). No coordinates (geocode
+  from OGIM/OGJ/RMI during reconciliation) and no status column. RIL Jamnagar is TWO rows —
+  'RIL, Jamnagar' (DTA, 33 MMTPA) and 'RPL (SEZ), Jamnagar' (SEZ/export, 35.2 MMTPA) — both real,
+  co-located; the country-blocked matcher separates them by capacity. Cauvery Basin (CPCL) is
+  listed at 0 (under capacity augmentation) → normalizes to null capacity, not a zero. CPCL state
+  cell says 'CHENNAI' (a city; PPAC's own error for Tamil Nadu) — kept verbatim. Coordless → dedups
+  via the country-blocked greedy-1:1 path in match.py. Excludes no rows; all 23 are crude refineries.

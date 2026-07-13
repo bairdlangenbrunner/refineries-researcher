@@ -1,0 +1,26 @@
+{
+  "source": "india_ppac",
+  "rows": 23,
+  "with_coords": 0,
+  "with_capacity_kbpd": 22,
+  "fill_rate": {
+    "source": 1.0,
+    "source_id": 1.0,
+    "name": 1.0,
+    "country": 1.0,
+    "iso3": 1.0,
+    "subnational": 1.0,
+    "city": 1.0,
+    "latitude": 0.0,
+    "longitude": 0.0,
+    "capacity_value": 1.0,
+    "capacity_units": 1.0,
+    "capacity_kbpd": 0.957,
+    "status": 0.0,
+    "owner": 1.0,
+    "configuration": 0.0,
+    "start_year": 0.0,
+    "source_url": 1.0,
+    "source_tier": 1.0
+  }
+}
