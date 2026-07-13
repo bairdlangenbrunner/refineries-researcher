@@ -20,24 +20,27 @@ Baird applies by hand.
     eia, india_ppac,                                     RefineryIDs)      ▲
     brazil_anp, climate_trace)                                            │ reconcile (match.py +
    overlay-only ─────ingest.py──▶ canonical parquet ───────────────────┘  build_reconciliation_review.py)
-   (irs_rcn)                                             -> review workbook (never merged)
+   (irs_rcn, gem_gci)                                    -> review workbook (never merged)
 ```
 
 1. **Ingest** each source to the canonical schema (`ingest.py`, per source).
 2. **Build** the main by clustering across the 8 mergeable sources (`merge.py`/`match.py`).
-3. **Reconcile** the overlay-only source (`irs_rcn`) against the main → a review workbook
-   (`match.py` + `build_reconciliation_review.py`). Same engine reconciles any single source.
+3. **Reconcile** the overlay-only sources (`irs_rcn`, `gem_gci`) against the main → a review
+   workbook (`match.py` + `build_reconciliation_review.py`). Same engine reconciles any single source.
 4. **Update / Discover / QC** — ongoing maintenance, same as the siblings.
 
-## Background sources (9 registered — see `docs/reference/source_roster.md`)
+## Background sources (10 registered — see `docs/reference/source_roster.md`)
 
 **Mergeable — clustered into the main** (`merge.py --sources`):
 - **RMI Refinery List (Feb '23)** — 484 rows, primary seed. Drive folder
   `1gJaJ7KYByNAHzoF0ve6ienuEvsfP28bV`, file `15CoiFuiT-JtDD-cb3ZV-Cx_Qb8RUPiDk`.
 - **OGJ Worldwide Refining survey** — 577 rows, rebuilt from the WW Refining PDF (country
   on every row; no coordinates). Europe-only map-JSON adapter kept as `adapter_mapjson.py`.
+  Not citable (ruling, Baird 2026-07-13) — proprietary/paywalled PDF, background only; refs
+  added later by a research workflow (OGJ *articles* remain citable, this dataset does not).
 - **OGIM v2.7** — 692 rows, refineries GIS layer (coordinate corroboration); gpkg at
-  `/Users/baird/Dropbox/_gis-data/ogim/OGIM_v2.7.gpkg`.
+  `/Users/baird/Dropbox/_gis-data/ogim/OGIM_v2.7.gpkg`. Citable (ruling, Baird 2026-07-13) —
+  published GIS dataset, not a GEM surface.
 - **GEM China Independent Oil Refinery Tracker for RMI** — 101 rows, schema template + China
   seed; Google Sheet `1PyNUtGUDLdY1chJ-MkzzgV_OnAcNTp2QlIq8jLhStPw`. GEM-authored → seed
   only, never citable.
@@ -55,6 +58,13 @@ Baird applies by hand.
 - **IRS Active Fuel Refineries (RCN) registry** — 227, US, Tier 1; tax definition, no
   capacity/coords → capacity-gated matcher never auto-matches. **OVERLAY ONLY** (Baird's
   ruling); reconciled into `batches/refineries_irs_rcn_reconciliation_*.xlsx`.
+- **GEM Global Chemicals Inventory (GCI)** (Nov '25 V1) — 868 worldwide chemical plants;
+  GEM-authored → seed only, never citable. A *chemicals* tracker, so the adapter scope-filters
+  to **94 refinery candidates** (crude/condensate feedstock OR a genuine refined-fuel product).
+  Coord-bearing, no capacity. **OVERLAY ONLY** (Baird's ruling, 2026-07-13); reconciled into
+  `batches/refineries_gem_gci_reconciliation_*.xlsx` — the gem_gci-only sheet is the payload
+  (refineries hiding in the chemicals inventory). First run vs main `20260713_1416_ET`:
+  57 matched, 37 discovery candidates, 64 possible.
 
 ## Open decisions (greenfield surface — get Baird's ruling, then log it)
 
@@ -72,10 +82,11 @@ Baird applies by hand.
 ## Status of the build (update as it evolves)
 
 - ✅ Repo scaffold, schema, controlled vocab, capacity conversions, source registry, ingest
-  engine, all 9 source manifests + adapters.
-- ✅ **Ingest**: all 9 sources → `sources/<name>/canonical.parquet`. Seed: rmi 484, ogj 577
+  engine, all 10 source manifests + adapters.
+- ✅ **Ingest**: all 10 sources → `sources/<name>/canonical.parquet`. Seed: rmi 484, ogj 577
   (WW Refining PDF, country on every row, no coords), ogim 692, china_rmi_tracker 101. Later:
-  eia 124, india_ppac 23, brazil_anp 18, climate_trace 728, irs_rcn 227. Sentinel handling:
+  eia 124, india_ppac 23, brazil_anp 18, climate_trace 728, irs_rcn 227, gem_gci 94 (of 868,
+  scope-filtered to refinery candidates). Sentinel handling:
   capacity `<=0` (RMI `0`, OGIM `-999`) and OGIM's `1900` start-year placeholder null out;
   `tttpa`, `Mt/a`, and `'000 MT`/yr → kbpd all verified in `capacity_normalize`.
 - ✅ **Build**: `match.py` (cKDTree coord-blocking pass + COUNTRY-blocked greedy-1:1 pass for

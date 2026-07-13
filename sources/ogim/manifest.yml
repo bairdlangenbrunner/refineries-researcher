@@ -4,7 +4,7 @@ description: >
   point features. Strongest for coordinate/location corroboration; also carries BOTH design
   capacity and throughput (the design-vs-throughput cross-check).
 source_tier: 2
-citable: false          # OGIM aggregates other sources; SRC_REF_ID points into its own registry, not URLs
+citable: true           # RULING (Baird 2026-07-13): OGIM is citable — published GIS dataset, not a GEM surface; re-verify each value/URL (SRC_REF_ID points into OGIM's own registry, so cite the OGIM record/dataset)
 
 format: gpkg
 location:

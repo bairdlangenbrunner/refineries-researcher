@@ -1,0 +1,54 @@
+name: gem_gci
+description: >
+  GEM Global Chemicals Inventory (GCI) — Global Energy Monitor's worldwide plant-level
+  chemicals tracker (November 2025, V1). 868 operating chemical plants that produce any of
+  8 tracked chemicals (ethylene, propylene, butadiene, benzene, toluene, xylene, methanol,
+  ammonia), each with point coordinates, owner (+ GEM entity ID), feedstock, and primary/
+  secondary products. A CHEMICALS inventory, so most rows are standalone petrochemical
+  plants that are OUT OF SCOPE for GRT. Its value here is the intersection: chemical
+  complexes that are actually integrated REFINERIES (on-site crude/condensate distillation)
+  or CTL/GTL/bio fuel plants we may be missing. OVERLAY-ONLY discovery cross-check.
+source_tier: 2          # GEM-authored compiled inventory; here it is seed/overlay, never authoritative
+citable: false          # GEM SURFACE (gem.wiki-backed) — Standing Rule #1: seed data, NEVER a citation
+
+format: xlsx            # 'Plant data' sheet; adapter filters to refinery candidates + parses combined coords/owner
+adapter: adapter.py
+location:
+  file_path: "sources/gem_gci/Plant-level-data-Global-Chemicals-Inventory-November-2025-V1.xlsx"
+  sheet: "Plant data"
+  page: "https://globalenergymonitor.org/projects/global-chemicals-inventory/"
+
+id_field: "source_id"   # the GEM plant ID, format P10000014XXXX
+
+# Adapter emits canonical fields directly (parses the "lat, lon" Coordinates cell, strips the
+# "[NN%]" ownership brackets from owner, and FILTERS the 868 plants down to refinery candidates).
+# No capacity exists in this dataset -> capacity_kbpd is always null (it corroborates existence
+# and location, never capacity). No status column (operating-only snapshot). No configuration.
+
+notes: >
+  ⚠ OVERLAY-ONLY — NEVER merged into the main (RULING, Baird 2026-07-13), same treatment as
+  irs_rcn. Its sole use is the discovery/reconciliation review workbook
+  (batches/refineries_gem_gci_reconciliation_*.xlsx): rows that MATCH the main confirm coverage;
+  the gem_gci_only sheet is the payload = refineries hiding in the chemicals inventory that our
+  main may lack, worked by hand. GEM-authored -> NOT citable; anything it surfaces must be
+  re-verified against an independent primary source (never cite gem.wiki / the GCI itself).
+
+  ⚠ SCOPE FILTER (in the adapter, not the engine): the GCI is a chemicals tracker, so the
+  adapter keeps only plausible refinery candidates and drops the ~770 pure-petrochemical rows.
+  A row is KEPT when either (a) feedstock includes `crude oil` or `condensate` (on-site crude
+  distillation = a refinery / integrated complex), or (b) a secondary product is a genuine
+  refined fuel (gasoline, diesel, jet fuel, kerosene, heating oil, gas oil, fuel oil, bitumen,
+  asphalt, lubricant, marine fuel, petroleum coke, naphtha). Two false-friend tokens are
+  stripped before the fuel test: `diesel exhaust fluid` (a urea/DEF product, NOT diesel) and
+  `pyrolysis gasoline` (a steam-cracker byproduct, NOT refining). ~94 candidates survive. The
+  filter is deliberately narrow (strong signals only); the dropped count is recorded in the
+  canonical summary. A naphtha-fed-only sweep for integrated aromatics complexes is a possible
+  follow-up if the miss list looks thin.
+
+  Coordinates: single "Coordinates" cell is "latitude, longitude" (lat FIRST — comma-separated
+  decimal degrees), NOT WKT; every row has one. Coordinate accuracy maps exact/approximate to
+  the Accuracy vocab (kept in provenance, not a canonical field). Owner may list multiple
+  parties and "[NN%]" stakes; the adapter keeps the first party, stake brackets stripped (use
+  the GEM entity ID column for entity work). Operating-only snapshot as of 2025-09-01 — do NOT
+  infer a Status from presence. Not citable, coord-bearing -> matches via the coordinate pass in
+  match.py; with no capacity it never auto-adopts a value, only corroborates existence/location.

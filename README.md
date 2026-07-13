@@ -50,8 +50,8 @@ Full detail — row counts, unit traps, quirks, citability — in `docs/referenc
 | Source | Scope | Role | Citable? |
 |---|---|---|---|
 | `rmi` — RMI Refinery List (Feb '23) | worldwide (484) | primary global seed; capacity + ISO3 + config, no status | no |
-| `ogj` — OGJ Worldwide Refining survey | worldwide (577) | capacity/owner/status; country on every row; **no coords** | yes* |
-| `ogim` — OGIM v2.7 refineries layer | worldwide (692) | location/coordinate corroboration (GIS) | no |
+| `ogj` — OGJ Worldwide Refining survey | worldwide (577) | capacity/owner/status; country on every row; **no coords** | no |
+| `ogim` — OGIM v2.7 refineries layer | worldwide (692) | location/coordinate corroboration (GIS) | yes |
 | `china_rmi_tracker` — GEM China tracker | China (101) | schema template + China seed; GEM-authored | **no** |
 | `eia` — EIA Refinery Capacity Report (Form EIA-820) | US (124) | US capacity gold standard; b/cd + coords; **merged** | yes |
 | `india_ppac` — India PPAC installed capacity | India (23) | national capacity anchor; ⚠ `'000 MT`/yr unit; coordless; **merged** | yes |
@@ -59,8 +59,9 @@ Full detail — row counts, unit traps, quirks, citability — in `docs/referenc
 | `climate_trace` — Climate TRACE refining assets (v5.8.0) | worldwide (728) | independent coord+capacity+config; **merged**; nameplate runs high | yes |
 | `irs_rcn` — IRS Active Fuel Refineries registry | US (227) | **OVERLAY ONLY, never merged**; tax def, no capacity/coords | yes |
 
-\* every URL still passes `url_verifier.py` before it can be a `[ref]`; GEM/gem.wiki and
-`abarrelfull.wikidot.com` are never citable, even when a source dataset cites them.
+Note: every `citable` source's URLs still pass `url_verifier.py` before they can be a
+`[ref]`; GEM/gem.wiki and `abarrelfull.wikidot.com` are never citable, even when a source
+dataset cites them.
 
 ## Status (greenfield)
 

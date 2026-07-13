@@ -121,8 +121,12 @@ main. **Adding a dataset is config, not engine code** — drop a new manifest an
 Registered sources (full detail in `docs/reference/source_roster.md`):
 - **rmi** — RMI Refinery List (Feb '23), ~800 rows worldwide. Primary global seed. Tier 2.
 - **ogj** — Oil & Gas Journal Worldwide Refining survey (map JSON + PDF). Dual-unit
-  capacity (kbbl/cd + Mt/a), owner, status. Tier 2 (industry-standard).
+  capacity (kbbl/cd + Mt/a), owner, status. Tier 2 (industry-standard). **Not citable**
+  (ruling, Baird 2026-07-13) — the WW Refining PDF is proprietary/paywalled → **background
+  only**; refs added later by a research workflow. (OGJ *articles* remain citable — a
+  separate trade-press source, not this dataset.)
 - **ogim** — OGIM v2.7 refineries layer (GIS). Location/coordinate corroboration. Tier 2.
+  **Citable** (ruling, Baird 2026-07-13) — published GIS dataset, not a GEM surface.
 - **china_rmi_tracker** — GEM's own China Independent Oil Refinery Tracker for RMI.
   **Schema template + China seed** — but GEM-authored, so **seed data, never a citation.**
 - **eia** — EIA Refinery Capacity Report (Form EIA-820), US-only, ~124 crude refineries, Tier 1
@@ -150,6 +154,14 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
   ONLY — keep it registered + ingested, but NEVER merge into the main.** Its sole use is the
   US reconciliation/discovery review workbook (`batches/refineries_irs_rcn_reconciliation_*.xlsx`);
   crude candidates are worked by hand, out-of-scope rows stay flagged.
+- **gem_gci** — GEM Global Chemicals Inventory (Nov '25 V1), worldwide, 868 operating chemical
+  plants (8 tracked chemicals). GEM-authored → **seed only, NEVER a citation** (Standing Rule #1).
+  A *chemicals* tracker, so most rows are out-of-scope petchem; the adapter **scope-filters** to
+  ~94 refinery candidates (feedstock = crude oil/condensate, OR a genuine refined-fuel secondary
+  product; DEF + pyrolysis-gasoline false friends stripped). Coord-bearing (one "lat, lon" cell)
+  but no capacity/status/config. **RULING (Baird 2026-07-13): OVERLAY ONLY — never merged into the
+  main**, same as irs_rcn; sole use is `batches/refineries_gem_gci_reconciliation_*.xlsx` — the
+  gem_gci-only sheet is the payload (refineries hiding in the chemicals inventory), worked by hand.
 
 ---
 
@@ -211,8 +223,8 @@ python scripts/ingest.py --source rmi   --out sources/rmi/canonical.parquet
 python scripts/ingest.py --source ogj   --out sources/ogj/canonical.parquet
 python scripts/ingest.py --source eia   --out sources/eia/canonical.parquet
 python scripts/match.py   --against main --source irs_rcn --out batches/staging/match_irs_rcn/
-python scripts/build_reconciliation_review.py --source irs_rcn   # match_<src> -> batches/refineries_<src>_reconciliation_<stamp>.xlsx (irs_rcn = the overlay-only source)
-python scripts/merge.py   --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace --out data/main_<stamp>.parquet   # irs_rcn is overlay-only, never merged
+python scripts/build_reconciliation_review.py --source irs_rcn   # match_<src> -> batches/refineries_<src>_reconciliation_<stamp>.xlsx (irs_rcn, gem_gci = the overlay-only sources)
+python scripts/merge.py   --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace --out data/main_<stamp>.parquet   # irs_rcn + gem_gci are overlay-only, never merged
 python scripts/export_main.py                 # latest main -> batches/refineries_main_<stamp>_worldwide_export.xlsx (drops RefineryID)
 python scripts/export_possible_review.py        # latest main's possible pairs -> batches/refineries_possible_review_<stamp>.xlsx
 python scripts/build_review_package.py --staging batches/staging/<run>/ \

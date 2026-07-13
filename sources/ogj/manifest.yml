@@ -6,7 +6,7 @@ description: >
   This supersedes the Europe-only interactive-map JSON (preserved as adapter_mapjson.py),
   which had coordinates but no country. Trade-off: the PDF has NO coordinates.
 source_tier: 2
-citable: true           # OGJ is a real publication; still re-verify each value/URL before staging
+citable: false          # RULING (Baird 2026-07-13): the OGJ WW Refining DATASET (proprietary/paywalled PDF) is background only, NOT a citable [ref] — refs to be added by a later research workflow. (OGJ *articles* ARE citable; that's a separate trade-press research source, not this dataset.)
 
 format: pdf             # parsed by adapter.py (pdfplumber); not a generic loader format
 adapter: adapter.py     # WW Refining PDF: country sections + wrapped names + 33 unit columns
