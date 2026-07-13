@@ -51,6 +51,10 @@ SCHEMA: list[tuple[str, str | None]] = [
     ("ogj_id", None),
     ("ogim_id", None),
     ("china_id", None),
+    ("eia_id", None),
+    ("climate_trace_id", None),
+    ("india_ppac_id", None),
+    ("brazil_anp_id", None),
     ("SourcesPresent", None),
     ("InScope", None),          # superset-first: yes | no | unknown (default at build)
     ("ScopeReason", None),      # why in/out of scope, filled by the separate scope pass
@@ -67,6 +71,10 @@ SOURCE_ID_COLUMN = {
     "ogj": "ogj_id",
     "ogim": "ogim_id",
     "china_rmi_tracker": "china_id",
+    "eia": "eia_id",
+    "climate_trace": "climate_trace_id",
+    "india_ppac": "india_ppac_id",
+    "brazil_anp": "brazil_anp_id",
 }
 
 STATUS_VOCAB = [

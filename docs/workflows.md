@@ -14,19 +14,26 @@ python scripts/ingest.py --source rmi
 # 3. eyeball the summary (row count, fill rates, capacity coverage)
 cat sources/rmi/canonical_summary.json
 ```
-Repeat per source (`rmi`, `ogj`, `china_rmi_tracker`; `ogim` once its data layer is added).
-Confirm capacity units resolved correctly — especially any tonnes/万吨 source.
+Repeat per source. Registered: `rmi`, `ogj`, `ogim`, `china_rmi_tracker`, `eia`,
+`india_ppac`, `brazil_anp`, `climate_trace`, `irs_rcn`. Confirm capacity units resolved
+correctly — especially any tonnes/万吨/`'000 MT` source.
 
 ## §2 Build / refresh the master  (greenfield)  — SOP: `sops/build.md`
 
 ```bash
-python scripts/merge.py --sources rmi,ogj,china_rmi_tracker --out data/master_<stamp>.parquet
-python scripts/build_review_package.py --staging batches/staging/build_<run>/ \
-    --output batches/refineries_batch_<stamp>_build.xlsx
+# merge the 8 mergeable sources (irs_rcn is overlay-only — never in --sources)
+python scripts/merge.py \
+    --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace \
+    --out data/master_<stamp>.parquet
+python scripts/export_master.py            # -> batches/refineries_master_<stamp>_worldwide_export.xlsx
+python scripts/export_possible_review.py   # -> batches/refineries_possible_review_<stamp>.xlsx
 ```
 The build clusters the same physical refinery across sources (match.py), assigns stable
-`RefineryID`s, fills crosswalk ids + `SourcesPresent`, and routes cross-source
-disagreements to a `conflicts` sheet (not silently resolved). No `[ref]`s are filled here.
+`RefineryID`s (via `data/id_crosswalk.json`, so ids survive rebuilds), fills crosswalk ids +
+`SourcesPresent`, picks each field's value by per-field source priority, and routes
+cross-source disagreements to `master_<stamp>.conflicts.parquet` (not silently resolved).
+No `[ref]`s are filled here. `export_master.py` writes the reviewable worldwide xlsx;
+`export_possible_review.py` writes the non-clustered `possible` pairs for threshold tuning.
 
 ## §3 Update existing refineries  (maintenance)  — SOP: `sops/update.md`
 

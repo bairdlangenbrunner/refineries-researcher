@@ -105,7 +105,9 @@ def main() -> None:
         row["n_other_master_nearby"] = int(n_master.get(r["a_id"], 1) - 1)
         row["Decision"], row["Notes"] = None, None
         recon.append(row)
-    recon = pd.DataFrame(recon).sort_values([f"{args.source}_state", f"{args.source}_city"]).reset_index(drop=True)
+    recon = pd.DataFrame(recon)
+    if len(recon):   # a capacity-gated source (e.g. irs_rcn) can yield 0 matches -> empty
+        recon = recon.sort_values([f"{args.source}_state", f"{args.source}_city"]).reset_index(drop=True)
 
     # --- Master_dedup: source rows matching >1 master row (under-merge clusters) ---
     dedup = []
@@ -143,7 +145,8 @@ def main() -> None:
         (f"{args.source} rows (in scope)", len(src)),
         ("matched to master", len(best)),
         (f"{args.source}-only (discovery)", len(only)),
-        ("capacity conflicts (matched, ratio<%.2f)" % CAP_CONFLICT, int((recon["cap_flag"] == "conflict").sum())),
+        ("capacity conflicts (matched, ratio<%.2f)" % CAP_CONFLICT,
+         int((recon["cap_flag"] == "conflict").sum()) if len(recon) else 0),
         ("source rows hitting >1 master row (dedup clusters)", len(multi_ids)),
         ("master rows tangled in those clusters", dedup["master_name"].nunique() if len(dedup) else 0),
         ("possible pairs", len(poss)),

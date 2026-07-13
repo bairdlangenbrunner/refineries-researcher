@@ -20,12 +20,14 @@ docs/
                               confidence_tiers, source_roster, workbook_conventions
   country_notes/              per-country findings
   PROJECT_SETUP_AND_CONTEXT.md
-sources/                      pluggable background-dataset registry (rmi, ogj, ogim,
-                              china_rmi_tracker) — manifest.yml (+ adapter.py) each
-scripts/                      ingest / match / merge / entity_lookup / url_verifier /
-                              build_review_package (+ paths, capacity_normalize)
-data/                         master_*.parquet + gitignored raw downloads
-batches/                      xlsx deliverables + staging/
+sources/                      pluggable background-dataset registry (9 sources) —
+                              manifest.yml (+ adapter.py) each; see sources/README.md
+scripts/                      ingest / match / merge / export_master / export_possible_review /
+                              build_reconciliation_review / build_review_package /
+                              entity_lookup / url_verifier (+ paths, capacity_normalize,
+                              country_normalize)
+data/                         master_*.parquet (+ .build.json/.conflicts/.possible) + gitignored raw
+batches/                      xlsx deliverables + staging/ (match_<src>/ per reconciliation run)
 tests/
 ```
 
@@ -33,24 +35,52 @@ tests/
 
 ```bash
 pip install -r requirements.txt
-python scripts/capacity_normalize.py            # self-check the unit conversions
-python scripts/ingest.py --source rmi           # (after downloading the RMI xlsx locally)
+python scripts/capacity_normalize.py                        # self-check the unit conversions
+python scripts/ingest.py --source rmi                       # background source -> canonical.parquet
+python scripts/merge.py \
+    --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace \
+    --out data/master_<stamp>.parquet                       # irs_rcn is overlay-only, never merged
+python scripts/export_master.py                             # latest master -> worldwide export xlsx
 ```
 
-## The four background sources
+## Background sources (9 registered)
 
-| Source | Role | Citable? |
-|---|---|---|
-| RMI Refinery List (Feb '23) | primary global seed (~800) | no |
-| OGJ Worldwide Refining survey | capacity/status corroboration (dual units) | yes* |
-| OGIM v2.7 refineries layer | location corroboration (GIS) | no |
-| GEM China Independent Oil Refinery Tracker | schema template + China seed | **no** |
+Full detail — row counts, unit traps, quirks, citability — in `docs/reference/source_roster.md`.
+
+| Source | Scope | Role | Citable? |
+|---|---|---|---|
+| `rmi` — RMI Refinery List (Feb '23) | worldwide (484) | primary global seed; capacity + ISO3 + config, no status | no |
+| `ogj` — OGJ Worldwide Refining survey | worldwide (577) | capacity/owner/status; country on every row; **no coords** | yes* |
+| `ogim` — OGIM v2.7 refineries layer | worldwide (692) | location/coordinate corroboration (GIS) | no |
+| `china_rmi_tracker` — GEM China tracker | China (101) | schema template + China seed; GEM-authored | **no** |
+| `eia` — EIA Refinery Capacity Report (Form EIA-820) | US (124) | US capacity gold standard; b/cd + coords; **merged** | yes |
+| `india_ppac` — India PPAC installed capacity | India (23) | national capacity anchor; ⚠ `'000 MT`/yr unit; coordless; **merged** | yes |
+| `brazil_anp` — Brazil ANP Anuário Tbl 2.29 | Brazil (18) | national capacity + start-year anchor; bbl/day; coordless; **merged** | yes |
+| `climate_trace` — Climate TRACE refining assets (v5.8.0) | worldwide (728) | independent coord+capacity+config; **merged**; nameplate runs high | yes |
+| `irs_rcn` — IRS Active Fuel Refineries registry | US (227) | **OVERLAY ONLY, never merged**; tax def, no capacity/coords | yes |
 
 \* every URL still passes `url_verifier.py` before it can be a `[ref]`; GEM/gem.wiki and
-`abarrelfull.wikidot.com` are never citable. See `docs/reference/source_roster.md`.
+`abarrelfull.wikidot.com` are never citable, even when a source dataset cites them.
 
-## Status
+## Status (greenfield)
 
-Scaffold + schema + capacity engine + source registry + ingest are in place. `match.py`,
-`merge.py`, `entity_lookup.py`, `url_verifier.py`, and `build_review_package.py` are
-skeletons to port from the sibling repos. See `docs/PROJECT_SETUP_AND_CONTEXT.md`.
+**Union master built** from the eight mergeable sources (`rmi, ogj, ogim, china_rmi_tracker,
+eia, india_ppac, brazil_anp, climate_trace`): latest `data/master_20260713_1416_ET.parquet` —
+**1260 rows** from 2747 input, 706 multi-source clusters, 291 conflicts, 1258 `possible`
+pairs queued for review. Every row is `InScope=unknown` (superset-first; the Phase-B scope
+pass is pending). Per-field source priority (in `merge.py`) puts the Tier-1 gov sources
+first for their own country (EIA for US capacity/status/owner; india_ppac/brazil_anp for
+national capacity), RMI as the global design-capacity backbone, and climate_trace's
+nameplate capacity **last** (it runs high vs operating figures → only fills genuine-miss
+rows; overlaps go to the conflicts report, never adopted).
+
+`irs_rcn` is **overlay-only by ruling** — never merged; it is reconciled against the master
+into `batches/refineries_irs_rcn_reconciliation_*.xlsx` for hand-worked US discovery.
+
+**Engine done:** `ingest`, `match` (cKDTree coord-blocking + country-blocked greedy-1:1),
+`merge`, `export_master`, `export_possible_review`, `build_reconciliation_review`,
+`capacity_normalize`, `country_normalize`, `paths`.
+**Still skeletons:** `build_review_package` (staged JSON → batch xlsx), `entity_lookup`
+(needs a shared-entity source), `url_verifier` fetch/match (host-block logic is live).
+
+See `docs/PROJECT_SETUP_AND_CONTEXT.md` for the full build log and open decisions.

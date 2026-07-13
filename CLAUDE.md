@@ -60,12 +60,18 @@ Where things live — **read on demand as the workflow dictates, not all at once
 
 ## Scope of the database (what counts as a refinery)
 
-- **In scope:** crude-oil refineries — facilities that distil/convert crude oil into
-  refined petroleum products. Include condensate splitters that process field condensate
-  into products. Capture the whole lifecycle: `proposed`, `construction`, `operating`,
-  `idle`/`mothballed`, `retired`, `cancelled`, `shelved`.
-- **Out of scope (for now):** standalone petrochemical plants with no crude distillation,
-  biorefineries/biodiesel/renewable-diesel-only plants, GTL/CTL plants, LNG/gas processing
+- **In scope:** GORT is an **all-refinery tracker**, not crude-only. Any facility that
+  refines a hydrocarbon feed into refined petroleum products belongs in the database:
+  - crude-oil refineries (atmospheric distillation → products), including small topping/
+    mini refineries and asphalt refineries that distil crude;
+  - condensate splitters that process field condensate into products;
+  - **unconventional-feed refineries: oil-shale, GTL (gas-to-liquids), CTL (coal-to-
+    liquids), and bio-refineries** (biodiesel/renewable-diesel/HVO). *(Ruling, Baird
+    2026-07-13 — feed type is not an exclusion; see `controlled_vocab.md`.)*
+
+  Capture the whole lifecycle: `proposed`, `construction`, `operating`, `idle`/
+  `mothballed`, `retired`, `cancelled`, `shelved`.
+- **Out of scope:** standalone petrochemical plants with no refining, LNG/gas processing
   (that's the LNG + pipeline trackers), and blending/storage terminals with no refining.
   A refinery's *associated* petrochemical units ARE captured, on the refinery record, in
   `PetchemFacilities`.
@@ -122,23 +128,27 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 - **eia** — EIA Refinery Capacity Report (Form EIA-820), US-only, ~124 crude refineries, Tier 1
   primary gov source and the **US capacity gold standard** (atmospheric crude distillation b/cd,
   operable/idle status, operator, PADD; coords joined from the EIA Energy Atlas GIS layer).
-  Long/tidy workbook → the adapter pivots + derives status. **Mergeable** (has capacity + coords),
-  unlike irs_rcn. Excludes 6 downstream-only petchem/lube/NGL sites (no crude distillation). EIA
-  is federal public domain and NOT a GEM surface, so it is **citable**.
+  Long/tidy workbook → the adapter pivots + derives status. **Merged** into the master (unlike
+  irs_rcn), and the priority source for US capacity/status/owner. Excludes 6 downstream-only
+  petchem/lube/NGL sites (no crude distillation). EIA is federal public domain and NOT a GEM
+  surface, so it is **citable**.
 - **india_ppac** — India PPAC "Installed Refining Capacity" (1 Apr 2025), India-only, 23 rows,
-  Tier 1 primary gov source. ⚠ Unit `'000 MT`/yr. Coordless national anchor. Citable `.gov.in`.
+  Tier 1 primary gov source. ⚠ Unit `'000 MT`/yr. Coordless national anchor, **merged**
+  (priority for India capacity). Citable `.gov.in`.
 - **brazil_anp** — Brazil ANP Anuário 2025 Table 2.29 (31/12/2024), Brazil-only, 18 rows, Tier 1
-  regulator. Capacity in bbl/day; no operator column; coordless. Citable federal open data.
+  regulator. Capacity in bbl/day; no operator column; coordless, **merged** (priority for Brazil
+  capacity + start year). Citable federal open data.
 - **climate_trace** — Climate TRACE `oil-and-gas-refining` asset layer (v5.8.0), 728 worldwide,
   Tier 2. Independent of GEM → **citable** (CC BY 4.0). Point coords + nameplate-max capacity
   (bbl/day, no unit trap) + process-type→config + owner; **no status, no start year**; operating
-  assets only. Pulled from the v6 REST API. **Mergeable** (coord-bearing). Nameplate capacity runs
-  high vs OGJ/RMI operating figures — a conflict to research, not adopt.
+  assets only. Pulled from the v6 REST API. **Merged** (coord-bearing), but ranked **last for
+  capacity** because nameplate runs high vs OGJ/RMI operating figures — its overlapping capacity
+  goes to the conflicts report, not adopted; it only supplies capacity for genuine-miss rows.
 - **irs_rcn** — IRS "Active Fuel Refineries" (Refiner Control Number) registry, US-only, Tier 1
   primary gov source. ⚠ Tax definition (§4101), broader than crude-only — ~half is gas/NGL/
   biodiesel/LNG/petchem. No capacity/coords → never auto-matches. **RULING (Baird): OVERLAY
   ONLY — keep it registered + ingested, but NEVER merge into the master.** Its sole use is the
-  US reconciliation/discovery review workbook (`batches/refineries_irs_reconciliation_*.xlsx`);
+  US reconciliation/discovery review workbook (`batches/refineries_irs_rcn_reconciliation_*.xlsx`);
   crude candidates are worked by hand, out-of-scope rows stay flagged.
 
 ---
@@ -200,9 +210,9 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 python scripts/ingest.py --source rmi   --out sources/rmi/canonical.parquet
 python scripts/ingest.py --source ogj   --out sources/ogj/canonical.parquet
 python scripts/ingest.py --source eia   --out sources/eia/canonical.parquet
-python scripts/match.py   --against master --source ogj --out batches/staging/match_ogj/
-python scripts/build_reconciliation_review.py --source eia   # match_<src> -> batches/refineries_<src>_reconciliation_<stamp>.xlsx
-python scripts/merge.py   --sources rmi,ogj,ogim,china_rmi_tracker --out data/master_<stamp>.parquet
+python scripts/match.py   --against master --source irs_rcn --out batches/staging/match_irs_rcn/
+python scripts/build_reconciliation_review.py --source irs_rcn   # match_<src> -> batches/refineries_<src>_reconciliation_<stamp>.xlsx (irs_rcn = the overlay-only source)
+python scripts/merge.py   --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace --out data/master_<stamp>.parquet   # irs_rcn is overlay-only, never merged
 python scripts/export_master.py                 # latest master -> batches/refineries_master_<stamp>_worldwide_export.xlsx (drops RefineryID)
 python scripts/export_possible_review.py        # latest master's possible pairs -> batches/refineries_possible_review_<stamp>.xlsx
 python scripts/build_review_package.py --staging batches/staging/<run>/ \

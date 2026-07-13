@@ -62,3 +62,11 @@ Log here every ambiguous inclusion/exclusion ruling so it's consistent across ba
   unconventional refineries (Estonia, Jordan). ⚠ Broader consequence flagged to Baird: this
   intent likely also pulls in GTL/CTL/bio-refineries that the CLAUDE.md scope section currently
   lists as out — pending an explicit ruling before that section is rewritten.
+- 2026-07-13 — **GTL (gas-to-liquids), CTL (coal-to-liquids), and bio-refineries** (biodiesel/
+  renewable-diesel/HVO) — **IN SCOPE** (keep) — ruling (Baird): confirms the all-refinery intent
+  of the oil-shale ruling above. GORT tracks any facility that refines a hydrocarbon feed into
+  refined products; feed type (crude / condensate / shale / gas / coal / bio) is **not** an
+  exclusion criterion. CLAUDE.md "Scope of the database" rewritten accordingly. Still out:
+  standalone petrochemical plants with no refining, LNG/gas *processing*, and blending/storage
+  terminals. (Consequence: expect new candidate classes — Sasol Secunda/Oryx GTL, Shenhua &
+  other China CTL, worldwide biodiesel/HVO plants — in future discovery.)

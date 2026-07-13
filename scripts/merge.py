@@ -51,20 +51,31 @@ except ImportError:  # pragma: no cover
 
 
 # Per-field source priority: first source in the list that has a non-null value wins.
-# Rationale: RMI = global design-capacity backbone; OGIM = location; china/ogj = status +
-# proper-case names; OGIM names are UPPERCASE so they lose name/case ties.
+# A source MUST appear in a field's list to contribute that field — an omitted source is
+# silently dropped for that field, so every mergeable source is listed wherever it carries data.
+# Rationale:
+#   - RMI = global design-capacity backbone; OGIM = location; china/ogj = status + proper-case names.
+#   - Tier-1 gov sources are country-scoped, so ranking them FIRST is safe (they only hold
+#     values for their own country's rows): EIA = US capacity/status/owner gold standard;
+#     india_ppac / brazil_anp = national capacity anchors; brazil_anp = start-year anchor.
+#   - climate_trace capacity is NAMEPLATE-max and runs high vs operating figures, so it is
+#     LAST for capacity — it only fills genuine-miss rows no other source covers; where it
+#     overlaps, its high figure is flagged in the conflicts report, never adopted. Its
+#     coords/config/owner are fine corroboration/fill.
+#   - UPPERCASE-name sources (OGIM, EIA) lose name/case ties, so they sit late for `name`.
 FIELD_PRIORITY = {
-    "name":           ["rmi", "china_rmi_tracker", "ogj", "ogim"],
-    "country":        ["rmi", "ogim", "china_rmi_tracker", "ogj"],
-    "iso3":           ["rmi", "ogim"],
-    "subnational":    ["china_rmi_tracker", "rmi", "ogim"],
-    "city":           ["china_rmi_tracker", "ogim", "rmi"],
-    "status":         ["china_rmi_tracker", "ogj", "ogim", "rmi"],
-    "owner":          ["rmi", "china_rmi_tracker", "ogj", "ogim"],
-    "configuration":  ["rmi", "china_rmi_tracker"],
-    "start_year":     ["china_rmi_tracker", "ogim", "ogj", "rmi"],
-    "capacity":       ["rmi", "china_rmi_tracker", "ogj", "ogim"],   # design capacity preferred
-    "coords":         ["ogim", "rmi", "china_rmi_tracker", "ogj"],   # OGIM is the location source
+    "name":           ["rmi", "china_rmi_tracker", "ogj", "india_ppac", "brazil_anp", "climate_trace", "eia", "ogim"],
+    "country":        ["rmi", "ogim", "china_rmi_tracker", "ogj", "eia", "india_ppac", "brazil_anp", "climate_trace"],
+    "iso3":           ["rmi", "ogim", "eia", "climate_trace", "india_ppac", "brazil_anp"],
+    "subnational":    ["eia", "india_ppac", "brazil_anp", "china_rmi_tracker", "rmi", "ogim"],
+    "city":           ["china_rmi_tracker", "eia", "india_ppac", "brazil_anp", "ogim", "rmi"],
+    "status":         ["eia", "china_rmi_tracker", "ogj", "ogim", "rmi"],
+    "owner":          ["eia", "rmi", "china_rmi_tracker", "india_ppac", "ogj", "climate_trace", "ogim"],
+    "configuration":  ["rmi", "china_rmi_tracker", "climate_trace"],
+    "start_year":     ["brazil_anp", "china_rmi_tracker", "ogim", "ogj", "rmi"],
+    # Tier-1 gov capacity first, then RMI design backbone; climate_trace nameplate LAST.
+    "capacity":       ["eia", "india_ppac", "brazil_anp", "rmi", "china_rmi_tracker", "ogj", "ogim", "climate_trace"],
+    "coords":         ["ogim", "eia", "rmi", "china_rmi_tracker", "climate_trace", "ogj"],   # OGIM is the location source
 }
 # Country implied by a source when its rows carry none.
 IMPLIED_COUNTRY = {"china_rmi_tracker": "China"}
@@ -243,7 +254,10 @@ def _assign_ids(clusters, frames, crosswalk_path: Path):
     """Stable RefineryID via an anchor (highest-priority source id present in the cluster).
     Existing anchors keep their id across rebuilds; new anchors extend the sequence."""
     crosswalk = json.loads(crosswalk_path.read_text()) if crosswalk_path.exists() else {}
-    anchor_pref = ["rmi", "ogj", "ogim", "china_rmi_tracker"]
+    # Seed sources first so clusters that contain one keep their existing RefineryID across
+    # rebuilds; later sources anchor only genuine-miss clusters (US/India/Brazil/worldwide-only).
+    anchor_pref = ["rmi", "ogj", "ogim", "china_rmi_tracker",
+                   "eia", "climate_trace", "india_ppac", "brazil_anp"]
 
     def anchor(cluster):
         by_src = {src: idx for src, idx in cluster}
