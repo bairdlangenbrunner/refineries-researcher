@@ -2,8 +2,8 @@
 
 ## What this is
 
-Backend scaffolding for building and maintaining GEM's worldwide crude-oil refinery
-database (working name **GORT — Global Oil Refinery Tracker**). Sibling of the
+Backend scaffolding for building and maintaining GEM's worldwide refinery
+database (working name **GRT — Global Refinery Tracker**). Sibling of the
 `lng-terminals-researcher`, `lng-carriers-researcher`, and `pipelines-researcher` repos and
 built to the same conventions, but **greenfield**: there is no live GEM refineries backend
 yet, so the first job is assembling the initial database from background datasets.
@@ -65,7 +65,7 @@ Baird applies by hand.
   `sops/build.md`.
 - **Entity source** for `entity_lookup.py` until a live backend exists (union of main +
   `../gem-database-access/` exports?).
-- **Tracker name/abbrev** (GORT is a working name) and eventual publication surface.
+- **Tracker name/abbrev** (GRT is a working name) and eventual publication surface.
 - **Capacity basis:** nameplate/design (RMI) vs distillation vs throughput — decide the
   main's canonical basis and note conversions.
 

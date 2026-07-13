@@ -1,7 +1,7 @@
 # refineries-researcher
 
 Backend scaffolding for building and maintaining **Global Energy Monitor's worldwide
-crude-oil refinery database** (working name **GORT — Global Oil Refinery Tracker**). Sibling
+refinery database** (working name **GRT — Global Refinery Tracker**). Sibling
 of `lng-terminals-researcher`, `lng-carriers-researcher`, and `pipelines-researcher`; same
 conventions, but **greenfield** — the first job is assembling the initial database from
 several background datasets, then maintaining it.

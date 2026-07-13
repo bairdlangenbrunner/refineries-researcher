@@ -15,7 +15,7 @@ don't re-derive either inline.
 | `export_possible_review.py` | ✅ works | Latest main's `possible` pairs → `batches/refineries_possible_review_<stamp>.xlsx` for threshold tuning. |
 | `build_reconciliation_review.py` | ✅ works | A `batches/staging/match_<src>/` run → `batches/refineries_<src>_reconciliation_<stamp>.xlsx` (matched / possible / background-only). Used for reconciliation + the irs_rcn overlay. |
 | `build_china_undermerge_review.py` | ✅ works | Resolves the China under-merge: hunts merge candidates for the **solo** china_rmi_tracker teapots (those still china-only in the main, read from the main's 1:1 `china_id` column — NOT the anchor-keyed `id_crosswalk.json`) vs the NON-tracker China main rows → `batches/refineries_china_undermerge_<stamp>.xlsx`. Already-merged teapots go to an `Already_merged` sheet (no action). Bridges teapot company-names to RMI plant-names via the tracker's own `RMIFacilityName` column (present only in the live "…- main" export, `data/china_gem_main_tracker.xlsx`). Proximity-only pairs are demoted (dense-park false-match guard). |
-| `entity_lookup.py` | ⛏ skeleton | De-dup owners/parents against shared GEM entities before staging. Blocked on a shared-entity source (no live GORT backend yet). |
+| `entity_lookup.py` | ⛏ skeleton | De-dup owners/parents against shared GEM entities before staging. Blocked on a shared-entity source (no live GRT backend yet). |
 | `url_verifier.py` | ⛏ partial | Confirm a URL contains the claimed value. Host-block (gem.wiki/globalenergymonitor/abarrelfull) is **live**; fetch + value-match still TODO. |
 | `build_review_package.py` | ⛏ skeleton | Staged JSON → reviewable batch xlsx (colors = confidence, `[ref]` GUARD). |
 

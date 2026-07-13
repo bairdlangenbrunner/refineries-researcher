@@ -56,7 +56,7 @@ Log here every ambiguous inclusion/exclusion ruling so it's consistent across ba
   Mont Belvieu) — **OUT OF SCOPE** — no crude distillation = not a crude refinery. The eia
   adapter excludes them at ingest.
 - 2026-07-13 — oil-shale refineries (e.g. Paraná Xisto / Petrobras SIX, São Mateus do Sul PR,
-  in OGIM + ANP) — **IN SCOPE** (keep) — ruling (Baird): GORT is "an ALL refinery tracker", not
+  in OGIM + ANP) — **IN SCOPE** (keep) — ruling (Baird): GRT is "an ALL refinery tracker", not
   only crude oil. Facilities that refine a hydrocarbon feed into refined products belong in the
   database even when the feed is not conventional crude. Sets the precedent for other shale/
   unconventional refineries (Estonia, Jordan). ⚠ Broader consequence flagged to Baird: this
@@ -64,7 +64,7 @@ Log here every ambiguous inclusion/exclusion ruling so it's consistent across ba
   lists as out — pending an explicit ruling before that section is rewritten.
 - 2026-07-13 — **GTL (gas-to-liquids), CTL (coal-to-liquids), and bio-refineries** (biodiesel/
   renewable-diesel/HVO) — **IN SCOPE** (keep) — ruling (Baird): confirms the all-refinery intent
-  of the oil-shale ruling above. GORT tracks any facility that refines a hydrocarbon feed into
+  of the oil-shale ruling above. GRT tracks any facility that refines a hydrocarbon feed into
   refined products; feed type (crude / condensate / shale / gas / coal / bio) is **not** an
   exclusion criterion. CLAUDE.md "Scope of the database" rewritten accordingly. Still out:
   standalone petrochemical plants with no refining, LNG/gas *processing*, and blending/storage

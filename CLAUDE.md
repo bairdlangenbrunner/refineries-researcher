@@ -1,8 +1,8 @@
 # Refineries Researcher — operational guide
 
 Backend scaffolding for an agentic research + reconciliation workflow that builds and
-maintains **Global Energy Monitor's worldwide crude-oil refinery database** — a new,
-open-access tracker (the *Global Oil Refinery Tracker*, working name **GORT**).
+maintains **Global Energy Monitor's worldwide refinery database** — a new,
+open-access tracker (the *Global Refinery Tracker*, working name **GRT**).
 
 This project is **greenfield**: unlike the sibling LNG/pipeline researchers, there is
 **no live GEM refineries backend yet**. The near-term job is to *build the initial
@@ -60,7 +60,7 @@ Where things live — **read on demand as the workflow dictates, not all at once
 
 ## Scope of the database (what counts as a refinery)
 
-- **In scope:** GORT is an **all-refinery tracker**, not crude-only. Any facility that
+- **In scope:** GRT is an **all-refinery tracker**, not crude-only. Any facility that
   refines a hydrocarbon feed into refined petroleum products belongs in the database:
   - crude-oil refineries (atmospheric distillation → products), including small topping/
     mini refineries and asphalt refineries that distil crude;

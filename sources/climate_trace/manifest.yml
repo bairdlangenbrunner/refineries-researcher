@@ -32,7 +32,7 @@ notes: >
   are left null. Coordinates are point facility locations (Centroid.Geometry is [lon, lat], SRID
   4326 — lon FIRST, do not transpose). Capacity is nameplate "maximum", so it may run higher than
   OGJ/RMI operating figures — treat capacity disagreement as a conflict to research, not adopt.
-  `AssetType` is a refinery process type that maps to GORT's Configuration vocab (Deep Conversion
+  `AssetType` is a refinery process type that maps to GRT's Configuration vocab (Deep Conversion
   -> deep conversion, Medium Conversion -> medium conversion, Hydroskimming -> hydroskimming; the
   finer API suffixes like 'Deep conversion Coking-FCC-GO-HC-6' are prefix-mapped; no 'topping'
   value appears). Owner is Owners[0].CompanyName (the list repeats one owner per emissions period;

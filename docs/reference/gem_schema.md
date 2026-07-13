@@ -1,4 +1,4 @@
-# GEM Refinery schema (Global Oil Refinery Tracker — working name GORT)
+# GEM Refinery schema (Global Refinery Tracker — working name GRT)
 
 Authoritative column list + meaning for the main refinery database. Derived from GEM's
 own **China Independent Oil Refinery Tracker for RMI** data dictionary and generalized

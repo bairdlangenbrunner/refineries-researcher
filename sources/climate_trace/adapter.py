@@ -24,7 +24,7 @@ from __future__ import annotations
 
 
 def _config(asset_type):
-    """Map Climate TRACE process type -> GORT Configuration vocab (prefix match handles the
+    """Map Climate TRACE process type -> GRT Configuration vocab (prefix match handles the
     finer API suffixes like 'Deep conversion Coking-FCC-GO-HC-6', 'Hydroskimming-0')."""
     if not asset_type:
         return None
