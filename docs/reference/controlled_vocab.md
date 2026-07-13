@@ -55,3 +55,10 @@ Log here every ambiguous inclusion/exclusion ruling so it's consistent across ba
   NGL: Equistar Channelview, Excel Paralubes, Trecora, Pasadena Performance, Enterprise & Targa
   Mont Belvieu) — **OUT OF SCOPE** — no crude distillation = not a crude refinery. The eia
   adapter excludes them at ingest.
+- 2026-07-13 — oil-shale refineries (e.g. Paraná Xisto / Petrobras SIX, São Mateus do Sul PR,
+  in OGIM + ANP) — **IN SCOPE** (keep) — ruling (Baird): GORT is "an ALL refinery tracker", not
+  only crude oil. Facilities that refine a hydrocarbon feed into refined products belong in the
+  database even when the feed is not conventional crude. Sets the precedent for other shale/
+  unconventional refineries (Estonia, Jordan). ⚠ Broader consequence flagged to Baird: this
+  intent likely also pulls in GTL/CTL/bio-refineries that the CLAUDE.md scope section currently
+  lists as out — pending an explicit ruling before that section is rewritten.

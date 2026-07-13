@@ -1,0 +1,42 @@
+name: climate_trace
+description: >
+  Climate TRACE oil-and-gas-refining asset layer — the worldwide facility-level inventory
+  from the Climate TRACE coalition (v5.8.0, June 2026 release). 728 refining assets across
+  110 countries, each with point coordinates, maximum refining capacity (bbl/day),
+  a process-type/configuration label, and owner. Independent of GEM. A coordinate- and
+  capacity-bearing corroboration source (like OGIM/OGJ), strongest for location, config,
+  and worldwide coverage of operating refineries.
+source_tier: 2          # independent modeled/compiled emissions inventory, industry-standard but estimated
+citable: true           # open coalition data (CC BY 4.0), NOT a GEM surface; re-verify each value/URL
+
+format: json            # v6 REST API returns all refining assets in one call — needs the adapter
+adapter: adapter.py
+location:
+  # The API returns every oil-and-gas-refining asset (Id, Name, Country/ISO3, AssetType,
+  # Centroid, Capacity, Owners) as JSON in a single call — the route for a worldwide source.
+  url: "https://api.climatetrace.org/v6/assets?subsectors=oil-and-gas-refining&limit=5000"
+  file_path: "sources/climate_trace/data/refining_assets.json"   # gitignored; re-fetch to refresh
+  page: "https://climatetrace.org/data"
+  # The bulk download bucket (downloads.climatetrace.org/latest/country_packages/{gas}/{ISO3}.zip)
+  # only ships per-country, all-sector zips (no global sector package) — the API is the clean path.
+
+id_field: "source_id"   # Climate TRACE's stable integer asset Id, stringified
+
+# Adapter emits canonical fields directly. Capacity is "Maximum refining capacity" in BBL per
+# day for every asset (units 'bpd' -> ingest /1000 = kbpd) — NO tonnes/volume unit trap.
+capacity_units: "bpd"
+
+notes: >
+  ⚠ NO status field and NO start/retire year — Climate TRACE only carries operating assets with
+  modeled emissions (there is no proposed/idle/retired lifecycle marker), so status and start_year
+  are left null. Coordinates are point facility locations (Centroid.Geometry is [lon, lat], SRID
+  4326 — lon FIRST, do not transpose). Capacity is nameplate "maximum", so it may run higher than
+  OGJ/RMI operating figures — treat capacity disagreement as a conflict to research, not adopt.
+  `AssetType` is a refinery process type that maps to GORT's Configuration vocab (Deep Conversion
+  -> deep conversion, Medium Conversion -> medium conversion, Hydroskimming -> hydroskimming; the
+  finer API suffixes like 'Deep conversion Coking-FCC-GO-HC-6' are prefix-mapped; no 'topping'
+  value appears). Owner is Owners[0].CompanyName (the list repeats one owner per emissions period;
+  JV assets list multiple — first distinct kept, CompanyId available for entity work). Tier 2, one
+  corroborating source, never auto-authoritative. Coordinate-bearing -> matches via the cKDTree
+  coordinate-blocking path in match.py. source_url is the API endpoint (provenance only; NOT a
+  verified per-asset [ref]).

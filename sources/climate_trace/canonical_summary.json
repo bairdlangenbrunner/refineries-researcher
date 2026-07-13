@@ -1,0 +1,26 @@
+{
+  "source": "climate_trace",
+  "rows": 728,
+  "with_coords": 728,
+  "with_capacity_kbpd": 693,
+  "fill_rate": {
+    "source": 1.0,
+    "source_id": 1.0,
+    "name": 1.0,
+    "country": 1.0,
+    "iso3": 1.0,
+    "subnational": 0.0,
+    "city": 0.0,
+    "latitude": 1.0,
+    "longitude": 1.0,
+    "capacity_value": 1.0,
+    "capacity_units": 1.0,
+    "capacity_kbpd": 0.952,
+    "status": 0.0,
+    "owner": 0.984,
+    "configuration": 1.0,
+    "start_year": 0.0,
+    "source_url": 1.0,
+    "source_tier": 1.0
+  }
+}

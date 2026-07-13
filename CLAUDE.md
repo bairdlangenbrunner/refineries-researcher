@@ -125,6 +125,15 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
   Long/tidy workbook → the adapter pivots + derives status. **Mergeable** (has capacity + coords),
   unlike irs_rcn. Excludes 6 downstream-only petchem/lube/NGL sites (no crude distillation). EIA
   is federal public domain and NOT a GEM surface, so it is **citable**.
+- **india_ppac** — India PPAC "Installed Refining Capacity" (1 Apr 2025), India-only, 23 rows,
+  Tier 1 primary gov source. ⚠ Unit `'000 MT`/yr. Coordless national anchor. Citable `.gov.in`.
+- **brazil_anp** — Brazil ANP Anuário 2025 Table 2.29 (31/12/2024), Brazil-only, 18 rows, Tier 1
+  regulator. Capacity in bbl/day; no operator column; coordless. Citable federal open data.
+- **climate_trace** — Climate TRACE `oil-and-gas-refining` asset layer (v5.8.0), 728 worldwide,
+  Tier 2. Independent of GEM → **citable** (CC BY 4.0). Point coords + nameplate-max capacity
+  (bbl/day, no unit trap) + process-type→config + owner; **no status, no start year**; operating
+  assets only. Pulled from the v6 REST API. **Mergeable** (coord-bearing). Nameplate capacity runs
+  high vs OGJ/RMI operating figures — a conflict to research, not adopt.
 - **irs_rcn** — IRS "Active Fuel Refineries" (Refiner Control Number) registry, US-only, Tier 1
   primary gov source. ⚠ Tax definition (§4101), broader than crude-only — ~half is gas/NGL/
   biodiesel/LNG/petchem. No capacity/coords → never auto-matches. **RULING (Baird): OVERLAY
