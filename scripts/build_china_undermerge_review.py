@@ -4,13 +4,19 @@
     python scripts/build_china_undermerge_review.py --out batches/refineries_china_undermerge_<stamp>.xlsx
 
 The problem: the GEM China Independent (teapot) tracker seeds 101 China rows into the
-master, but 91 of them sit as UNMERGED SINGLETONS while RMI / OGJ / OGIM / Climate TRACE
-describe many of the same plants under different names. The generic matcher can't bridge
-them because the tracker keys refineries by COMPANY name (e.g. "Shandong Dongming
-Petrochemical Group Co Ltd") while RMI keys by PLANT name ("Dongming Heze Shandong
-Refinery") — token overlap is low, so build's match drops the pair to `possible` or misses
-it. The tracker's own `RMIFacilityName` column names the RMI plant explicitly; this script
-uses that as a deterministic bridge on top of the geo/capacity matcher.
+master. Climate TRACE's coordinates already fold most (61) into multi-source clusters, but
+the rest sit as UNMERGED SINGLETONS while RMI / OGJ / OGIM / Climate TRACE may describe the
+same plant under a different name. The generic matcher can't bridge those because the
+tracker keys refineries by COMPANY name (e.g. "Shandong Dongming Petrochemical Group Co
+Ltd") while RMI keys by PLANT name ("Dongming Heze Shandong Refinery") — token overlap is
+low, so build's match drops the pair to `possible` or misses it. The tracker's own
+`RMIFacilityName` column names the RMI plant explicitly; this script uses that as a
+deterministic bridge on top of the geo/capacity matcher.
+
+Which teapots are still solo is read from the master's own `china_id` column (the 1:1 record
+of which china_rmi_tracker source_id fed each cluster) — NOT id_crosswalk.json, which is
+anchor-keyed (one highest-priority source per cluster) and so omits teapots that merged under
+an RMI/OGJ anchor. Only solo teapots are hunted; merged ones are already resolved.
 
 Reconciles the china_rmi_tracker source rows against the NON-tracker China master rows
 (SourcesPresent without `china_rmi_tracker`) — i.e. the potential duplicate entities —
@@ -22,7 +28,6 @@ docs/sops/reconciliation.md and the "China under-merge" item in PROJECT_SETUP_AN
 
 from __future__ import annotations
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -118,9 +123,22 @@ def main() -> None:
     mst = pd.read_parquet(mp)
     cn = mst[mst["ISO3"].astype(str) == "CHN"].copy()
 
-    # invert the crosswalk: RefineryID -> which teapot source_id (if any) landed in it
-    xwalk = json.loads((REPO / "data" / "id_crosswalk.json").read_text())
-    teapot_master_ids = {rid for k, rid in xwalk.items() if k.startswith(f"{SRC}:")}
+    # Map each teapot -> its master row DIRECTLY via the master's own `china_id` column
+    # (the source_id of the china_rmi_tracker row that fed the cluster). This is exact and
+    # anchor-independent — unlike data/id_crosswalk.json, which is keyed by each cluster's
+    # single highest-priority anchor source (rmi > ogj > ogim > china_rmi_tracker ...), so a
+    # teapot that merged under an RMI/OGJ anchor has NO `china_rmi_tracker:` crosswalk key at
+    # all. The same-source guard makes china_id 1:1, so this join is unambiguous.
+    tstate = {}  # teapot source_id -> {"state","master_name","sources"}
+    for _, mr in mst[mst["china_id"].notna()].iterrows():
+        tid = _sid(mr["china_id"])
+        srcs = str(mr["SourcesPresent"])
+        n = len([t for t in srcs.split(",") if t.strip()])
+        tstate[tid] = {
+            "state": "merged" if n > 1 else "solo",
+            "master_name": mr.get("RefineryName"),
+            "sources": srcs,
+        }
 
     # candidate pool = China master rows WITHOUT the china tracker = potential dup entities
     has_tracker = cn["SourcesPresent"].astype(str).str.contains(SRC)
@@ -135,19 +153,15 @@ def main() -> None:
     })
     cand_by_id = cand.set_index("RefineryID")
 
-    # teapot solo-vs-merged status in the current master (only solos are true dups to fix).
-    # Look up in the FULL master, not just the China subset — a teapot that merged with a
-    # coordless/ISO3-blank row can land outside the CHN slice.
-    mst_by_id = mst.set_index("RefineryID")
+    # Only SOLO teapots are genuine under-merge candidates: a teapot already in a multi-source
+    # cluster is resolved, and hunting candidates for it produces spurious pairs (dense-park
+    # coincidences to plants it isn't). Restrict the match passes to solo teapots; merged
+    # teapots are reported as-is in the Already_merged sheet.
+    solo_ids = {tid for tid, st in tstate.items() if st["state"] == "solo"}
+    src_solo = src[src["source_id"].isin(solo_ids)].copy()
 
-    def teapot_master_state(rid_master):
-        if rid_master is None or rid_master not in mst_by_id.index:
-            return None
-        srcs = str(mst_by_id.loc[rid_master, "SourcesPresent"])
-        return "merged" if "," in srcs else "solo"
-
-    # --- Pass A: geo / capacity / name via the shared matcher ---
-    pairs = match_sources(src, cand_frame, block_km=25.0)
+    # --- Pass A: geo / capacity / name via the shared matcher (solo teapots only) ---
+    pairs = match_sources(src_solo, cand_frame, block_km=25.0)
     # {teapot_source_id: {cand_refid: evidence}}
     candidates: dict[str, dict[str, dict]] = {}
     for _, r in pairs.iterrows():
@@ -162,7 +176,7 @@ def main() -> None:
     cand_norm = [(cid, normalize_name(nm), normalize_name(on))
                  for cid, nm, on in zip(cand["RefineryID"], cand["RefineryName"],
                                         cand.get("OtherNames", pd.Series([None] * len(cand))))]
-    for tid in src["source_id"]:
+    for tid in src_solo["source_id"]:
         rmi_name = extras.get(tid, {}).get("rmi_facility_name")
         if not rmi_name or str(rmi_name).strip() in ("", "None"):
             continue
@@ -195,11 +209,30 @@ def main() -> None:
     _rank = {"high": 0, "medium": 1, "low": 2}
     src_idx = src.set_index("source_id")
 
-    merge_rows, no_cand_rows = [], []
+    # Merged teapots are already resolved -> Already_merged sheet (no candidate hunt).
+    merged_rows = []
     for tid in src["source_id"]:
+        st = tstate.get(tid)
+        if not st or st["state"] != "merged":
+            continue
         s = src_idx.loc[tid]
         ex = extras.get(tid, {})
-        rid_master = xwalk.get(f"{SRC}:{tid}")
+        merged_rows.append({
+            "teapot_name": s.get("name"),
+            "teapot_chinese": ex.get("chinese"),
+            "teapot_city": s.get("city"),
+            "teapot_province": s.get("subnational"),
+            "teapot_cap_kbpd": _f(s.get("capacity_kbpd")),
+            "merged_into_master_name": st["master_name"],
+            "merged_with_sources": st["sources"],
+            "rmi_facility_name": ex.get("rmi_facility_name"),
+        })
+
+    # Solo teapots are the genuine under-merge surface -> Merge_candidates / no-candidate.
+    merge_rows, no_cand_rows = [], []
+    for tid in src_solo["source_id"]:
+        s = src_idx.loc[tid]
+        ex = extras.get(tid, {})
         base = {
             "teapot_name": s.get("name"),
             "teapot_chinese": ex.get("chinese"),
@@ -208,7 +241,7 @@ def main() -> None:
             "teapot_cap_kbpd": _f(s.get("capacity_kbpd")),
             "teapot_status": s.get("status"),
             "teapot_owner": s.get("owner"),
-            "in_master_as": teapot_master_state(rid_master),
+            "in_master_as": "solo",
             "is_in_rmi_flag": ex.get("is_in_rmi"),
             "rmi_facility_name": ex.get("rmi_facility_name"),
         }
@@ -240,6 +273,9 @@ def main() -> None:
                 "Decision": None, "Notes": None,
             })
 
+    merged_df = pd.DataFrame(merged_rows)
+    if len(merged_df):
+        merged_df = merged_df.sort_values(["teapot_province", "teapot_name"]).reset_index(drop=True)
     merge = pd.DataFrame(merge_rows)
     if len(merge):
         merge = merge.sort_values(
@@ -254,7 +290,6 @@ def main() -> None:
 
     teapots_with_cand = merge["teapot_name"].nunique() if len(merge) else 0
     high = merge[merge["confidence"] == "high"]["teapot_name"].nunique() if len(merge) else 0
-    solo = (nocand["in_master_as"] == "solo").sum() if len(nocand) else 0
     rmi_flag_no_twin = 0
     if len(nocand):
         rmi_flag_no_twin = int(nocand["is_in_rmi_flag"].astype(str).str.strip().str.lower().eq("yes").sum())
@@ -263,21 +298,24 @@ def main() -> None:
         ("source", SRC),
         ("master", mp.name),
         ("teapot rows (china tracker)", len(src)),
+        ("  already merged in master (resolved, no action)", len(merged_df)),
+        ("  solo in master (under-merge surface)", len(src_solo)),
         ("China master rows total", len(cn)),
-        ("  of which include the tracker", int(has_tracker.sum())),
         ("  candidate pool (non-tracker China rows)", len(cand)),
-        ("teapots with >=1 merge candidate", teapots_with_cand),
+        ("solo teapots with >=1 merge candidate", teapots_with_cand),
         ("  high-confidence (RMIname or tight geo)", high),
-        ("teapots with NO candidate", len(nocand)),
-        ("  of those, currently solo in master", int(solo)),
+        ("solo teapots with NO candidate", len(nocand)),
         ("  RMI-flagged (Is_In_RMI=Yes) but no twin found -> investigate", rmi_flag_no_twin),
     ], columns=["metric", "value"])
 
     readme = pd.DataFrame([
-        ("What this is", "Per-teapot merge candidates linking the GEM China Independent tracker "
+        ("What this is", "Per-teapot merge candidates linking SOLO GEM China Independent tracker "
                          "rows to their duplicate RMI/OGJ/OGIM/Climate-TRACE entities in the master."),
-        ("Why", "91 of 101 teapot rows sit unmerged; the tracker uses company names, RMI uses "
-                "plant names, so build's matcher can't bridge them automatically."),
+        ("Why", "The tracker uses company names, RMI uses plant names, so build's matcher can't "
+                "always bridge them — leaving some teapots as unmerged singletons (under-merge)."),
+        ("Scope", "Only teapots that are SOLO (china-tracker-only) in the current master are hunted "
+                  "— those are the genuine under-merge surface. Teapots already merged into a "
+                  "multi-source cluster are resolved and listed (no action) in Already_merged."),
         ("match_via = rmi_name(score)", "The teapot's own RMIFacilityName column matched this "
                                         "candidate's name/OtherNames. Strongest signal."),
         ("match_via = geo/label", "The generic matcher paired them by coordinate/capacity/name."),
@@ -285,9 +323,11 @@ def main() -> None:
         ("How to use", "For each high/medium row, confirm the teapot row and the candidate are the "
                        "same refinery, then COLLAPSE them in the master by hand (fold the teapot "
                        "name into the candidate's OtherNames, keep one record). Agent never merges."),
-        ("Merge_candidates", "teapots that have >=1 candidate (one row per teapot x candidate)."),
-        ("Teapot_no_candidate", "teapots with no found twin; RMI-flagged ones without a twin are "
-                                "listed first as anomalies to investigate."),
+        ("Merge_candidates", "solo teapots that have >=1 candidate (one row per teapot x candidate)."),
+        ("Teapot_no_candidate", "solo teapots with no found twin; RMI-flagged ones without a twin "
+                                "are listed first as anomalies to investigate."),
+        ("Already_merged", "teapots already folded into a multi-source master cluster — resolved, "
+                           "shown for audit (what they merged with), no action needed."),
         ("Standing rule", "Internal RefineryIDs are not emitted; identify rows by name/city/"
                           "capacity/sources. GEM tracker is seed only, never a [ref]."),
     ], columns=["field", "meaning"])
@@ -300,6 +340,8 @@ def main() -> None:
             merge.to_excel(xw, sheet_name="Merge_candidates", index=False)
         if len(nocand):
             nocand.to_excel(xw, sheet_name="Teapot_no_candidate", index=False)
+        if len(merged_df):
+            merged_df.to_excel(xw, sheet_name="Already_merged", index=False)
 
     print(f"wrote {out}")
     print(summary.to_string(index=False))

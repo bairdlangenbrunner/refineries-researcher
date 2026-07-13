@@ -110,16 +110,21 @@ Baird applies by hand.
   `batches/refineries_china_undermerge_<stamp>.xlsx` — per-teapot merge candidates for Baird to
   collapse by hand. Key: the tracker's own `RMIFacilityName` column (the teapot→RMI plant-name
   bridge) lives ONLY in the live "…- main" export, not the registered "…for RMI" one, so the
-  script reads `data/china_gem_main_tracker.xlsx` for it. Against master `1416`: 51 teapots get a
-  candidate (19 high-confidence via the RMIname bridge), 50 have none (mostly already-merged or
-  genuinely-unique teapots). Proximity-only pairs are demoted to `low` + an `ambiguous` flag —
-  dense Shandong/Dongying parks over-match on coordinates (the exact trap flagged earlier). Still
-  MANUAL to apply (agent never merges the master).
-- ⚠ **1416-build crosswalk bug (for Baird)**: `data/id_crosswalk.json` from the concurrent
-  all-sources build is **missing 9 teapot entries** — major refineries (Hengli Dalian 402,
-  Sinochem Quanzhou 301, Shenghong Lianyungang 321, …) contributed to the master but their
-  `china_rmi_tracker:<id> → R####` mapping wasn't written. `merge.py` likely drops non-representative
-  cluster members from the crosswalk. Worth a fix so the crosswalk is complete before the next build.
+  script reads `data/china_gem_main_tracker.xlsx` for it. Which teapots are still solo is read
+  from the master's own **`china_id` column** (a clean 1:1 record of the china_rmi_tracker
+  source_id in each cluster), NOT `id_crosswalk.json`. Against master `1416`: **61 teapots are
+  already merged** (Climate TRACE coords folded them in — resolved, listed in an Already_merged
+  sheet, no action) and **40 are solo** (the genuine under-merge surface); of the 40 solo, 25 get
+  a candidate (14 high-confidence via the RMIname bridge) and 15 have none. Proximity-only pairs
+  are demoted to `low` + an `ambiguous` flag — dense Shandong/Dongying parks over-match on
+  coordinates (the exact trap flagged earlier). Still MANUAL to apply (agent never merges).
+- ℹ **`id_crosswalk.json` is anchor-keyed by design** (not a bug): `merge.py:_assign_ids` writes
+  ONE key per cluster — `<anchor_source>:<id> → R####` for the cluster's single highest-priority
+  source (anchor order rmi > ogj > ogim > china_rmi_tracker > eia > climate_trace > india_ppac >
+  brazil_anp). So a teapot that merged under an RMI/OGJ anchor (e.g. Hengli Dalian, Sinochem
+  Quanzhou, Shenghong Lianyungang) legitimately has no `china_rmi_tracker:` key — it's already
+  merged, not missing. To map every per-source id to its master row, use the master's per-source
+  id columns (`china_id`, `rmi_refine_id`, `ogj_id`, …), which are complete and 1:1.
 - ☐ Review the `possible` pairs (`data/master_*.possible.parquet`, now 1258) to tune thresholds
   — the count grew with the added sources; watch for climate_trace/eia US near-duplicates.
 - ☐ **Phase B scope pass**: set `InScope`/`ScopeReason` per the open scope-boundary decisions above.
