@@ -1,15 +1,20 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Refinery background-source manifest",
+  "description": "Reference contract for sources/<name>/manifest.yml. NOTE: no automated validator runs in the pipeline — ingest.py reads manifests directly; this file documents the expected shape for authors and reviewers.",
   "type": "object",
-  "required": ["name", "source_tier", "format", "column_map"],
+  "required": ["name", "source_tier", "format"],
+  "if": { "not": { "required": ["adapter"] } },
+  "then": { "required": ["column_map"] },
   "properties": {
     "name": { "type": "string", "description": "Registry key, matches the sources/<name>/ dir." },
     "description": { "type": "string" },
     "source_tier": { "type": "integer", "minimum": 1, "maximum": 3,
       "description": "1 = primary/regulatory, 2 = industry-standard dataset, 3 = weak/community." },
     "citable": { "type": "boolean", "default": false,
-      "description": "Whether the source's own URLs may seed a GEM [ref] (still re-verified). GEM-authored datasets: false." },
+      "description": "Whether the source's own URLs may seed a GEM [ref] (still re-verified). GEM-authored datasets: false. Documentation-only today — enforcement is url_verifier.py's host blocklist." },
+    "mergeable": { "type": "boolean", "default": true,
+      "description": "May merge.py include this source in --sources? false = OVERLAY-ONLY (e.g. irs_rcn, gem_gci): reviewed via build_reconciliation_review.py, never merged into the main. merge.py hard-fails on mergeable: false." },
     "format": { "type": "string", "enum": ["xlsx", "csv", "geojson", "gpkg", "json", "pdf", "custom"] },
     "location": {
       "type": "object",
@@ -20,29 +25,42 @@
         "url": { "type": "string" },
         "sibling_path": { "type": "string", "description": "Path relative to the gem repos root, e.g. ../refineries-tracker/refineries.json" },
         "sheet": { "type": "string", "description": "Sheet/tab name for xlsx." },
-        "header_row": { "type": "integer", "description": "0-based header row index." }
+        "header_row": { "type": "integer", "description": "0-based header row index." },
+        "layer": { "type": "string", "description": "Layer name for gpkg/geojson multi-layer files (geopandas read_file)." },
+        "coords_url": { "type": "string", "description": "Adapter-specific: companion GIS layer URL to join coordinates from (e.g. eia)." },
+        "coords_path": { "type": "string", "description": "Adapter-specific: local path of the downloaded companion coords file." },
+        "page": { "type": "string", "description": "Human landing page for the dataset (provenance; not fetched)." }
       }
     },
     "id_field": { "type": "string", "description": "Source column that is its stable primary key." },
     "column_map": {
       "type": "object",
-      "description": "canonical_field -> source_column_name (or a dotted path for nested json).",
+      "description": "canonical_field -> source_column_name (or a dotted path for nested json). Required only when there is no adapter — an adapter emits canonical-keyed rows itself.",
       "additionalProperties": { "type": "string" }
     },
     "capacity_units": { "type": "string",
       "description": "Default units for the capacity column if the source doesn't carry a units column (e.g. 'bpd' for RMI)." },
     "status_map": {
       "type": "object",
-      "description": "source status value -> controlled Status vocab value.",
+      "description": "source status value -> controlled Status vocab value (case-insensitive keys).",
       "additionalProperties": { "type": "string" }
     },
     "configuration_map": {
       "type": "object",
-      "description": "source config code/value -> controlled Configuration vocab value (e.g. H -> hydroskimming).",
+      "description": "source config code/value -> controlled Configuration vocab value (e.g. H -> hydroskimming; case-insensitive keys).",
       "additionalProperties": { "type": "string" }
     },
+    "start_year_sentinels": {
+      "type": "array", "items": { "type": "integer" },
+      "description": "Years that mean 'unknown' in the source and are nulled at ingest (default: [1900], OGIM's placeholder)."
+    },
+    "defaults": {
+      "type": "object",
+      "description": "Constant fills for a scoped source: canonical_field -> value applied when the row leaves it null (e.g. china_rmi_tracker sets country/iso3).",
+      "additionalProperties": true
+    },
     "adapter": { "type": "string",
-      "description": "Optional python module (adapter.py) with a parse() for custom formats." },
+      "description": "Optional python module (adapter.py) with a parse() for custom formats. When set, column_map is not required." },
     "notes": { "type": "string" }
   }
 }

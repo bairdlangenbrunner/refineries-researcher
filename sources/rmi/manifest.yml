@@ -1,6 +1,6 @@
 name: rmi
 description: >
-  RMI Refinery List (February '23) — ~800 crude-oil refineries worldwide. Primary global
+  RMI Refinery List (February '23) — 484 crude-oil refineries worldwide. Primary global
   seed for the greenfield build. One flat sheet, one row per refinery.
 source_tier: 2
 citable: false          # RMI's own Typology Source cells are often abarrelfull.wikidot.com; re-verify everything

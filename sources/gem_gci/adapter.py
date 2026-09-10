@@ -10,14 +10,22 @@ and primary/secondary products.
 CHEMICALS inventory, so the overwhelming majority of rows are standalone petrochemical
 plants that are OUT OF SCOPE for a refinery tracker. This adapter therefore FILTERS the 868
 plants down to plausible refinery candidates and drops the rest (recorded as an aggregate
-count on parse.excluded_count, not a per-row list). A row is a candidate when either:
+count on parse.excluded_count, not a per-row list). A row is a candidate when any of:
   (a) feedstock includes `crude oil` or `condensate`  — on-site crude distillation, i.e. a
       refinery or an integrated refinery-petrochemical complex; or
   (b) a secondary product is a genuine refined fuel (gasoline, diesel, jet fuel, kerosene,
       heating oil, gas oil, fuel oil, bitumen, asphalt, lubricant, marine fuel, petroleum
-      coke, naphtha) — captures CTL/GTL/bio fuel plants and fuel-making complexes too.
+      coke, naphtha) — captures CTL/GTL/bio fuel plants and fuel-making complexes too; or
+  (c) the plant NAME self-identifies as a refinery (refinery/refining/refinaria/raffinerie)
+      — the naphtha-fed sweep, generalized: catches integrated refinery-petrochemical
+      complexes that the GCI records with a proximate/downstream feedstock (naphtha) or an
+      `unknown`/`coal`/`ethane` feedstock, which branches (a)/(b) miss (e.g. Shell Norco,
+      Rabigh, OMV Schwechat, Sinopec Zhenhai). Plus a narrower refiner-brand signal: a
+      naphtha-fed plant whose name carries the standalone word `oil` (S-OIL, Indian Oil).
 Two false friends are neutralized before the fuel test: `diesel exhaust fluid` (DEF, a urea
 product — not diesel) and `pyrolysis gasoline` (a steam-cracker byproduct — not refining).
+The name branch does NOT admit pure naphtha-fed steam crackers/aromatics plants (BASF,
+Braskem, Total Olefins) — those have no on-site refining and stay OUT OF SCOPE.
 
 Downstream: overlay-only (manifest merge is never), so this canonical parquet feeds
 match.py + build_reconciliation_review.py, not merge.py. Matches confirm coverage; the
@@ -53,6 +61,11 @@ REFINED_FUELS = (
     "gasoline", "diesel", "jet fuel", "kerosene", "heating oil", "gas oil", "fuel oil",
     "bitumen", "asphalt", "lubricant", "marine fuel", "petroleum coke", "naphtha",
 )
+# Name-marker sweep (branch c): a plant that self-identifies as a refinery is in scope even
+# when its feedstock cell is naphtha/unknown/coal/ethane. `_OIL_NAME` is a weaker refiner-brand
+# signal trusted ONLY on a naphtha-fed row (avoids admitting oil-branded pure petchem plants).
+_REFINERY_NAME = re.compile(r"refiner|refining|refinaria|refineria|raffiner", re.I)
+_OIL_NAME = re.compile(r"\boil\b", re.I)
 
 
 def _feedstock_tokens(value) -> set:
@@ -66,13 +79,18 @@ def _refined_fuels(secondary) -> list:
     return [f for f in REFINED_FUELS if f in s]
 
 
-def _candidate_reason(feed_tokens: set, fuels: list) -> str | None:
+def _candidate_reason(name, feed_tokens: set, fuels: list) -> str | None:
     reasons = []
     crude = sorted(feed_tokens & CRUDE_FEEDSTOCKS)
     if crude:
         reasons.append(f"feedstock: {', '.join(crude)}")
     if fuels:
         reasons.append(f"refined-fuel product: {', '.join(fuels)}")
+    nm = str(name or "")
+    if _REFINERY_NAME.search(nm):
+        reasons.append("name: refinery")
+    elif "naphtha" in feed_tokens and _OIL_NAME.search(nm):
+        reasons.append("name: oil + naphtha-fed")
     return " | ".join(reasons) if reasons else None
 
 
@@ -119,7 +137,7 @@ def parse(manifest: dict, raw_path: str) -> list[dict]:
             continue
         feed_tokens = _feedstock_tokens(cell(r, "feedstock"))
         fuels = _refined_fuels(cell(r, "secondary"))
-        reason = _candidate_reason(feed_tokens, fuels)
+        reason = _candidate_reason(cell(r, "name"), feed_tokens, fuels)
         if reason is None:                       # pure petrochemical -> out of scope, drop
             excluded += 1
             continue

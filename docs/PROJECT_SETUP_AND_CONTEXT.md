@@ -60,11 +60,11 @@ Baird applies by hand.
   ruling); reconciled into `batches/refineries_irs_rcn_reconciliation_*.xlsx`.
 - **GEM Global Chemicals Inventory (GCI)** (Nov '25 V1) — 868 worldwide chemical plants;
   GEM-authored → seed only, never citable. A *chemicals* tracker, so the adapter scope-filters
-  to **94 refinery candidates** (crude/condensate feedstock OR a genuine refined-fuel product).
+  to **115 refinery candidates** (crude/condensate feedstock, a genuine refined-fuel product, OR a refinery name-marker — the generalized naphtha sweep).
   Coord-bearing, no capacity. **OVERLAY ONLY** (Baird's ruling, 2026-07-13); reconciled into
   `batches/refineries_gem_gci_reconciliation_*.xlsx` — the gem_gci-only sheet is the payload
-  (refineries hiding in the chemicals inventory). First run vs main `20260713_1416_ET`:
-  57 matched, 37 discovery candidates, 64 possible.
+  (refineries hiding in the chemicals inventory). Run vs main `20260713_1416_ET`:
+  74 matched, 41 no-confirmed-match (21 with no lead + 20 possible-only), 78 possible.
 
 ## Open decisions (greenfield surface — get Baird's ruling, then log it)
 
@@ -85,7 +85,7 @@ Baird applies by hand.
   engine, all 10 source manifests + adapters.
 - ✅ **Ingest**: all 10 sources → `sources/<name>/canonical.parquet`. Seed: rmi 484, ogj 577
   (WW Refining PDF, country on every row, no coords), ogim 692, china_rmi_tracker 101. Later:
-  eia 124, india_ppac 23, brazil_anp 18, climate_trace 728, irs_rcn 227, gem_gci 94 (of 868,
+  eia 124, india_ppac 23, brazil_anp 18, climate_trace 728, irs_rcn 227, gem_gci 115 (of 868,
   scope-filtered to refinery candidates). Sentinel handling:
   capacity `<=0` (RMI `0`, OGIM `-999`) and OGIM's `1900` start-year placeholder null out;
   `tttpa`, `Mt/a`, and `'000 MT`/yr → kbpd all verified in `capacity_normalize`.

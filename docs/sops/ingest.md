@@ -5,14 +5,16 @@ be matched/merged. Greenfield step 1. Recipe: `workflows.md` §1.
 
 ## Steps
 
-1. **Confirm the manifest** (`sources/<name>/manifest.yml`) is complete and validates
-   against `sources/_schema/manifest.schema.json`. Every canonical field the source can
-   supply is mapped; `source_tier` and `citable` are set honestly.
+1. **Confirm the manifest** (`sources/<name>/manifest.yml`) is complete and matches the
+   shape documented in `sources/_schema/manifest.schema.json` (a reference contract — no
+   automated validator runs; check by eye). Every canonical field the source can supply is
+   mapped (`column_map` is only needed when there's no adapter); `source_tier`, `citable`,
+   and `mergeable` are set honestly.
 2. **Get the raw data local** into the manifest's `file_path` (gitignored). Drive files:
    download by `drive_file_id`. Sibling files (OGJ) are read in place via `sibling_path`.
 3. **Run** `python scripts/ingest.py --source <name>`.
 4. **Verify** `canonical_summary.json`:
-   - row count matches expectation (RMI ≈ 800);
+   - row count matches expectation (RMI = 484);
    - `with_coords` / `with_capacity_kbpd` fill rates are plausible;
    - **capacity units resolved correctly** — the #1 failure. Spot-check a few known
      refineries against `capacity_units.md`. A tonnes/万吨 source that came out 10× low or

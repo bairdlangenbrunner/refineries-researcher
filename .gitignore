@@ -6,6 +6,9 @@ data/*.geojson
 data/*.pdf
 sources/**/data/
 sources/**/canonical.parquet
+# stray source PDFs at the sources/ root (the OGJ survey is proprietary; its home is the
+# sibling refineries-tracker repo per sources/ogj/manifest.yml)
+sources/*.pdf
 # but keep the audit summaries:
 !sources/**/canonical_summary.json
 
@@ -14,6 +17,7 @@ data/main_*.parquet
 
 # Batch deliverables + staging derived artifacts (agent-authored staging JSON IS committed)
 batches/*.xlsx
+batches/_archive/
 batches/staging/**/*.parquet
 batches/staging/**/derived/
 

@@ -86,6 +86,11 @@ def name_score(a_norm: str, b_norm: str) -> float:
     return round(fuzz.token_set_ratio(a_norm, b_norm) / 100.0, 3)
 
 
+# A matched pair whose min/max capacity ratio is below this is flagged as a capacity
+# conflict (merge.py conflicts report; reconciliation review cap_flag). One shared value.
+CAP_CONFLICT_RATIO = 0.85
+
+
 def capacity_ratio(a_kbpd, b_kbpd):
     a, b = _num(a_kbpd), _num(b_kbpd)
     if not a or not b:
@@ -109,8 +114,6 @@ def classify(name: float, dist_km, cap_ratio) -> str:
     if dist_km <= 1.0 and name >= 0.55:
         return "match"
     if dist_km <= 5.0 and name >= 0.80:
-        return "match"
-    if dist_km <= 2.0 and name >= 0.85:   # near-identical name, ~coincident point
         return "match"
     # capacity can lift a borderline spatial+name pair
     if dist_km <= 5.0 and name >= 0.55 and (cap_ratio or 0) >= 0.9:
@@ -295,16 +298,21 @@ def main() -> None:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     m.to_parquet(out / "matches.parquet", index=False)
+    matched_rows = int(m.loc[m["label"] == "match", "a_idx"].nunique())
     summary = {
         "source": args.source, "against": args.against,
         "source_rows": len(src), "against_rows": len(against),
+        # `match`/`possible` count PAIRS (one source row can match >1 against-row);
+        # `source_rows_matched` counts unique source rows, so it + unmatched = source_rows.
         "match": int((m["label"] == "match").sum()),
         "possible": int((m["label"] == "possible").sum()),
-        "source_unmatched": int(len(src) - m.loc[m["label"] == "match", "a_idx"].nunique()),
+        "source_rows_matched": matched_rows,
+        "source_unmatched": int(len(src) - matched_rows),
     }
     (out / "match_summary.json").write_text(json.dumps(summary, indent=2))
     print(f"match {args.source} vs {args.against}: "
-          f"{summary['match']} match, {summary['possible']} possible, "
+          f"{summary['match']} match pairs ({matched_rows} source rows), "
+          f"{summary['possible']} possible, "
           f"{summary['source_unmatched']} source-unmatched -> {out}")
 
 

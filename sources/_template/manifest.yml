@@ -3,9 +3,11 @@ description: >
   One-line description of what this dataset is and what it's good for.
 source_tier: 2                # 1 primary/regulatory | 2 industry-standard | 3 weak/community
 citable: false               # may the source's own URLs seed a GEM [ref] (after re-verify)? GEM-authored => false
+mergeable: true              # false = OVERLAY ONLY (never in merge.py --sources; review workbook only)
 
 format: xlsx                 # xlsx | csv | geojson | gpkg | json | pdf | custom
-adapter:                     # optional: adapter.py with parse() for nonstandard formats
+# adapter: adapter.py        # uncomment for nonstandard formats — the adapter's parse() emits
+#                            # canonical-keyed rows itself, and column_map below can be dropped
 location:
   file_path: "data/<file>"   # one of file_path / drive_file_id / url / sibling_path
   drive_file_id:

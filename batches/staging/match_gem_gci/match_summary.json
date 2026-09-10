@@ -1,9 +1,9 @@
 {
   "source": "gem_gci",
   "against": "main",
-  "source_rows": 94,
+  "source_rows": 115,
   "against_rows": 1260,
-  "match": 60,
-  "possible": 64,
-  "source_unmatched": 37
+  "match": 81,
+  "possible": 78,
+  "source_unmatched": 41
 }

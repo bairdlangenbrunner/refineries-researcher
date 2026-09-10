@@ -25,12 +25,13 @@ unit traps, quirks, merge status — in `docs/reference/source_roster.md`.
 | `brazil_anp/` | Brazil ANP Anuário 2025, Table 2.29 | Brazil, 18 | 1 | yes | national anchor; bbl/day; no operator/coords/status |
 | `climate_trace/` | Climate TRACE `oil-and-gas-refining` (v5.8.0) | worldwide, 728 | 2 | yes | independent coord+capacity+config; **mergeable**; nameplate runs high |
 | `irs_rcn/` | IRS "Active Fuel Refineries" (RCN) registry | US, 227 | 1 | yes | tax def (broader than crude); no capacity/coords → **OVERLAY ONLY, never merged** |
-| `gem_gci/` | GEM Global Chemicals Inventory (Nov '25 V1) | worldwide, 94 of 868 | 2 | **no** | GEM-authored chemicals tracker, seed only; adapter scope-filters to refinery candidates (crude/condensate feed OR refined-fuel product); coords, no capacity → **OVERLAY ONLY, never merged** |
+| `gem_gci/` | GEM Global Chemicals Inventory (Nov '25 V1) | worldwide, 115 of 868 | 2 | **no** | GEM-authored chemicals tracker, seed only; adapter scope-filters to refinery candidates (crude/condensate feed, refined-fuel product, OR refinery name-marker/naphtha sweep); coords, no capacity → **OVERLAY ONLY, never merged** |
 
 ## How to add a source
 
-1. `cp -r _template <name>` and edit `<name>/manifest.yml` (validate against
-   `_schema/manifest.schema.json`).
+1. `cp -r _template <name>` and edit `<name>/manifest.yml` (`_schema/manifest.schema.json`
+   documents the expected shape — no automated validator runs; check by eye). Overlay-only
+   sources set `mergeable: false` (merge.py hard-fails on them).
 2. Map every canonical field you can supply; leave the rest out.
 3. If the format is nonstandard (nested JSON, GIS, multi-tab), implement `parse()` in
    `<name>/adapter.py` (see `_template/adapter.py`).

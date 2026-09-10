@@ -15,13 +15,14 @@ python scripts/ingest.py --source rmi
 cat sources/rmi/canonical_summary.json
 ```
 Repeat per source. Registered: `rmi`, `ogj`, `ogim`, `china_rmi_tracker`, `eia`,
-`india_ppac`, `brazil_anp`, `climate_trace`, `irs_rcn`. Confirm capacity units resolved
-correctly — especially any tonnes/万吨/`'000 MT` source.
+`india_ppac`, `brazil_anp`, `climate_trace`, `irs_rcn`, `gem_gci`. Confirm capacity units
+resolved correctly — especially any tonnes/万吨/`'000 MT` source.
 
 ## §2 Build / refresh the main  (greenfield)  — SOP: `sops/build.md`
 
 ```bash
-# merge the 8 mergeable sources (irs_rcn is overlay-only — never in --sources)
+# merge the 8 mergeable sources (irs_rcn + gem_gci are overlay-only, `mergeable: false`
+# in their manifests — merge.py hard-fails if they appear in --sources)
 python scripts/merge.py \
     --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace \
     --out data/main_<stamp>.parquet
@@ -40,16 +41,17 @@ No `[ref]`s are filled here. `export_main.py` writes the reviewable worldwide xl
 ```bash
 # worklist = stale/blank-ref rows in scope; research each, stage edits + verified [ref]s
 python scripts/build_review_package.py --staging batches/staging/update_<run>/ \
-    --output batches/refineries_batch_<stamp>_<scope>_update.xlsx
+    --output batches/refineries_batch_<stamp>_<scope>_update.xlsx   # ⛏ SKELETON — not yet implemented
 ```
 Every staged value carries ≥1 verified `[ref]` (or `EstimatedCapacity?=Yes` + Notes). Run
-`url_verifier.py` on every URL first.
+`url_verifier.py` on every URL first (⛏ fetch/value-match is still manual — see
+`scripts/README.md`).
 
 ## §4 Discover new refineries  — SOP: `sops/discovery.md`
 
 ```bash
 python scripts/build_review_package.py --staging batches/staging/discovery_<run>/ \
-    --output batches/refineries_batch_<stamp>_<scope>_discovery.xlsx
+    --output batches/refineries_batch_<stamp>_<scope>_discovery.xlsx   # ⛏ SKELETON — not yet implemented
 ```
 Background-only rows → match to `OtherNames` before proposing as new. Escalate >5 new
 clusters in one country.
@@ -57,12 +59,16 @@ clusters in one country.
 ## §5 Reconcile vs a background dataset  — SOP: `sops/reconciliation.md`
 
 ```bash
-python scripts/match.py --source ogj --against main --out batches/staging/recon_ogj_<run>/
-python scripts/build_review_package.py --staging batches/staging/recon_ogj_<run>/ \
-    --output batches/refineries_batch_<stamp>_<scope>_reconciliation.xlsx
+python scripts/match.py --source <name> --against main --out batches/staging/match_<name>/
+python scripts/build_reconciliation_review.py --source <name>
+#   -> batches/refineries_<name>_reconciliation_<stamp>.xlsx
+#      sheets: Summary / <name>_to_main / Main_dedup / <name>_only / Possible
 ```
-Same matcher as build, single source vs the main. Findings are candidates for Update,
-never auto-applied.
+Same matcher as build, single source vs the main. The staging dir MUST be
+`batches/staging/match_<name>/` — `build_reconciliation_review.py` reads that path. This
+is the recipe every shipped reconciliation used (eia, india_ppac, brazil_anp,
+climate_trace, and the overlay-only irs_rcn + gem_gci). Findings are candidates for
+Update, never auto-applied.
 
 ## §6 Triage (plan the batch; memo)  — SOP: `sops/triage.md`
 

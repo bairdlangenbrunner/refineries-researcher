@@ -7,6 +7,7 @@ description: >
   US refineries. Carries NO capacity, coordinates, status, or configuration.
 source_tier: 1          # primary US-government source (for the identity/location fields it has)
 citable: true           # real IRS publication; still re-verify the specific claimed value + URL
+mergeable: false        # OVERLAY ONLY (ruling, Baird) — merge.py hard-fails if listed in --sources
 
 format: pdf             # parsed by adapter.py (pdfplumber, column-x0 segmentation)
 adapter: adapter.py

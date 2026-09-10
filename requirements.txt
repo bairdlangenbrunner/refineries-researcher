@@ -4,8 +4,11 @@ pyyaml>=6.0
 openpyxl>=3.1          # xlsx read (ingest) + write (build_review_package)
 pyarrow>=14.0          # parquet
 
+# Matching engine (match.py)
+rapidfuzz>=3.0         # fuzzy name scoring
+scipy>=1.11            # cKDTree coordinate blocking
+
 # Source parsing
-json5>=0.9             # OGJ map-JSON adapter (JS-object literal)
 geopandas>=0.14        # OGIM GIS layer (optional; ingest imports lazily)
 
 # Research / verification

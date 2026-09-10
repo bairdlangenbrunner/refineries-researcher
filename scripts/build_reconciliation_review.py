@@ -25,22 +25,13 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from paths import latest_main, BATCHES
+from paths import latest_main, main_stamp, BATCHES
+from match import _num as _f, CAP_CONFLICT_RATIO as CAP_CONFLICT
 
 try:
     import pandas as pd
 except ImportError:  # pragma: no cover
     sys.exit("build_reconciliation_review.py needs pandas + openpyxl (pip install -r requirements.txt)")
-
-CAP_CONFLICT = 0.85   # matched pair whose capacity ratio is below this = worth a look
-
-
-def _f(v):
-    try:
-        f = float(v)
-        return f if f == f else None
-    except (TypeError, ValueError):
-        return None
 
 
 def main() -> None:
@@ -52,7 +43,7 @@ def main() -> None:
     mp = latest_main()
     if mp is None:
         sys.exit("No main yet (data/main_*.parquet).")
-    stamp = mp.stem[len("main_"):]
+    stamp = main_stamp(mp)
 
     match_path = Path(f"batches/staging/match_{args.source}/matches.parquet")
     if not match_path.exists():

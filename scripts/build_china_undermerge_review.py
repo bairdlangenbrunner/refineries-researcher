@@ -32,8 +32,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from paths import latest_main, SOURCES, BATCHES, REPO
-from match import match_sources, name_score, normalize_name
+from paths import latest_main, main_stamp, SOURCES, BATCHES, REPO
+from match import match_sources, name_score, normalize_name, _num as _f
 
 try:
     import pandas as pd
@@ -43,14 +43,6 @@ except ImportError:  # pragma: no cover
 
 SRC = "china_rmi_tracker"
 RMI_HINT_MIN = 0.72   # RMIFacilityName vs candidate name/othernames: token_set floor to surface
-
-
-def _f(v):
-    try:
-        f = float(v)
-        return f if f == f else None
-    except (TypeError, ValueError):
-        return None
 
 
 def _sid(v):
@@ -114,7 +106,7 @@ def main() -> None:
     mp = latest_main()
     if mp is None:
         sys.exit("No main yet (data/main_*.parquet).")
-    stamp = mp.stem[len("main_"):]
+    stamp = main_stamp(mp)
 
     src = pd.read_parquet(SOURCES / SRC / "canonical.parquet").copy()
     src["source_id"] = src["source_id"].map(_sid)

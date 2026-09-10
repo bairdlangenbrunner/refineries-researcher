@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # runnable from repo root
-from paths import BATCHES, latest_main
+from paths import BATCHES, latest_main, main_stamp
 from match import load_canonical
 
 try:
@@ -55,7 +55,7 @@ def main() -> None:
         sys.exit(f"No possible-pairs file next to the main ({possible_path.name}).")
     p = pd.read_parquet(possible_path)
 
-    stamp = main.stem[len("main_"):]
+    stamp = main_stamp(main)
     out = Path(args.out) if args.out else (BATCHES / f"refineries_possible_review_{stamp}.xlsx")
     out.parent.mkdir(parents=True, exist_ok=True)
 

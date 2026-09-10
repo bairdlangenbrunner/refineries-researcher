@@ -40,8 +40,8 @@ from itertools import combinations
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # runnable from repo root
-from paths import SOURCES, DATA, SCHEMA, SOURCE_ID_COLUMN, ordered_columns
-from match import match_sources, haversine_km, load_canonical, _num
+from paths import SOURCES, DATA, SOURCE_ID_COLUMN, ordered_columns
+from match import match_sources, haversine_km, load_canonical, _num, CAP_CONFLICT_RATIO
 from country_normalize import canonical_country, iso3_to_name
 
 try:
@@ -236,7 +236,7 @@ def _conflicts(cluster, frames, refid) -> list[dict]:
     caps = [(s, _num(r.get("capacity_kbpd"))) for s, r in zip(srcs, rows) if _num(r.get("capacity_kbpd"))]
     if len(caps) > 1:
         lo, hi = min(v for _, v in caps), max(v for _, v in caps)
-        if hi > 0 and lo / hi < 0.85:
+        if hi > 0 and lo / hi < CAP_CONFLICT_RATIO:
             out.append({"RefineryID": refid, "field": "capacity_kbpd",
                         "values": "; ".join(f"{s}={v:.1f}" for s, v in caps)})
     pts = [(s, _num(r.get("latitude")), _num(r.get("longitude"))) for s, r in zip(srcs, rows)
@@ -280,6 +280,24 @@ def _assign_ids(clusters, frames, crosswalk_path: Path):
     return ids
 
 
+def _assert_mergeable(names: list[str]) -> None:
+    """Hard gate: refuse overlay-only sources (`mergeable: false` in the manifest — e.g.
+    irs_rcn, gem_gci) and sources with no crosswalk column. Those are reviewed via
+    build_reconciliation_review.py and must NEVER reach the main."""
+    import yaml
+    bad = []
+    for n in names:
+        mp = SOURCES / n / "manifest.yml"
+        mani = yaml.safe_load(mp.read_text()) if mp.exists() else {}
+        if mani.get("mergeable") is False:
+            bad.append(f"{n} (mergeable: false — overlay-only)")
+        elif n not in SOURCE_ID_COLUMN:
+            bad.append(f"{n} (no crosswalk column in paths.SOURCE_ID_COLUMN)")
+    if bad:
+        sys.exit("refusing to merge: " + "; ".join(bad)
+                 + ". Overlay sources go through build_reconciliation_review.py, never merge.py.")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sources", required=True, help="comma-separated source names")
@@ -287,6 +305,7 @@ def main() -> None:
     args = ap.parse_args()
 
     names = [s.strip() for s in args.sources.split(",") if s.strip()]
+    _assert_mergeable(names)
     frames = {n: load_canonical(n).reset_index(drop=True) for n in names}
     for df in frames.values():   # ids are cross-type (int vs str) — normalize to text
         df["source_id"] = df["source_id"].astype("string")

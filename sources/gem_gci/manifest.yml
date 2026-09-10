@@ -10,11 +10,12 @@ description: >
   or CTL/GTL/bio fuel plants we may be missing. OVERLAY-ONLY discovery cross-check.
 source_tier: 2          # GEM-authored compiled inventory; here it is seed/overlay, never authoritative
 citable: false          # GEM SURFACE (gem.wiki-backed) — Standing Rule #1: seed data, NEVER a citation
+mergeable: false        # OVERLAY ONLY (ruling, Baird 2026-07-13) — merge.py hard-fails if listed in --sources
 
 format: xlsx            # 'Plant data' sheet; adapter filters to refinery candidates + parses combined coords/owner
 adapter: adapter.py
 location:
-  file_path: "sources/gem_gci/Plant-level-data-Global-Chemicals-Inventory-November-2025-V1.xlsx"
+  file_path: "sources/gem_gci/data/Plant-level-data-Global-Chemicals-Inventory-November-2025-V1.xlsx"
   sheet: "Plant data"
   page: "https://globalenergymonitor.org/projects/global-chemicals-inventory/"
 
@@ -34,16 +35,18 @@ notes: >
   re-verified against an independent primary source (never cite gem.wiki / the GCI itself).
 
   ⚠ SCOPE FILTER (in the adapter, not the engine): the GCI is a chemicals tracker, so the
-  adapter keeps only plausible refinery candidates and drops the ~770 pure-petrochemical rows.
-  A row is KEPT when either (a) feedstock includes `crude oil` or `condensate` (on-site crude
-  distillation = a refinery / integrated complex), or (b) a secondary product is a genuine
-  refined fuel (gasoline, diesel, jet fuel, kerosene, heating oil, gas oil, fuel oil, bitumen,
-  asphalt, lubricant, marine fuel, petroleum coke, naphtha). Two false-friend tokens are
-  stripped before the fuel test: `diesel exhaust fluid` (a urea/DEF product, NOT diesel) and
-  `pyrolysis gasoline` (a steam-cracker byproduct, NOT refining). ~94 candidates survive. The
-  filter is deliberately narrow (strong signals only); the dropped count is recorded in the
-  canonical summary. A naphtha-fed-only sweep for integrated aromatics complexes is a possible
-  follow-up if the miss list looks thin.
+  adapter keeps only plausible refinery candidates and drops the ~750 pure-petrochemical rows.
+  A row is KEPT when any of three branches fires: (a) feedstock includes `crude oil` or
+  `condensate` (on-site crude distillation = a refinery / integrated complex); (b) a secondary
+  product is a genuine refined fuel (gasoline, diesel, jet fuel, kerosene, heating oil, gas
+  oil, fuel oil, bitumen, asphalt, lubricant, marine fuel, petroleum coke, naphtha); or (c) a
+  refinery NAME-MARKER — `refiner`/`refining` in the plant name, or a naphtha-fed plant named
+  `oil` — the generalized naphtha sweep that catches integrated refinery-petchem complexes
+  hiding under a naphtha/unknown/coal/ethane feedstock (Shell Norco, Rabigh, OMV Schwechat)
+  without admitting pure steam crackers. Two false-friend tokens are stripped before the fuel
+  test: `diesel exhaust fluid` (a urea/DEF product, NOT diesel) and `pyrolysis gasoline` (a
+  steam-cracker byproduct, NOT refining). ~115 candidates survive; the dropped count is
+  recorded in the canonical summary.
 
   Coordinates: single "Coordinates" cell is "latitude, longitude" (lat FIRST — comma-separated
   decimal degrees), NOT WKT; every row has one. Coordinate accuracy maps exact/approximate to

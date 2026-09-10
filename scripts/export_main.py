@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # runnable from repo root
-from paths import BATCHES, latest_main, ordered_columns
+from paths import BATCHES, latest_main, main_stamp, ordered_columns
 
 try:
     import pandas as pd
@@ -23,11 +23,6 @@ except ImportError:  # pragma: no cover
     sys.exit("export_main.py needs pandas + openpyxl (pip install -r requirements.txt)")
 
 DROP_COLS = ["RefineryID"]   # internal id — never emitted (workbook_conventions.md)
-
-
-def _stamp_from(main: Path) -> str:
-    # main_20260713_1008_ET.parquet -> 20260713_1008_ET
-    return main.stem[len("main_"):]
 
 
 def main() -> None:
@@ -41,7 +36,7 @@ def main() -> None:
         sys.exit("No main found — build one with scripts/merge.py first.")
     df = pd.read_parquet(main)
 
-    stamp = _stamp_from(main)
+    stamp = main_stamp(main)
     out = Path(args.out) if args.out else (BATCHES / f"refineries_main_{stamp}_worldwide_export.xlsx")
     out.parent.mkdir(parents=True, exist_ok=True)
 

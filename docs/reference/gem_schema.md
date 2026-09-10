@@ -92,7 +92,14 @@ values excepted — see `EstimatedCapacity?`). `[ref]` cells never hold GEM/gem.
 | `rmi_refine_id` | Matched RMI `rmi_refine_id`, if any. |
 | `ogj_id` | Matched OGJ record id, if any. |
 | `ogim_id` | Matched OGIM feature id, if any. |
-| `SourcesPresent` | Which background sources contain this refinery, e.g. `rmi;ogj;ogim`. |
+| `china_id` | Matched GEM China-tracker id, if any. |
+| `eia_id` | Matched EIA refinery id, if any. |
+| `india_ppac_id` | Matched India PPAC row id, if any. |
+| `brazil_anp_id` | Matched Brazil ANP row id, if any. |
+| `climate_trace_id` | Matched Climate TRACE asset id, if any. |
+| `SourcesPresent` | Which background sources contain this refinery, `,`-separated, e.g. `rmi,ogj,ogim`. |
+| `InScope` | `yes`/`no`/`unknown` — defaults to `unknown` at build; ruled by the separate Phase-B scope pass. |
+| `ScopeReason` | Why in/out of scope (topping, condensate splitter, petchem-only, …); filled by the scope pass. |
 | `Wiki` | gem.wiki page slug (internal only — NEVER used as a `[ref]`). |
 
 ### Notes

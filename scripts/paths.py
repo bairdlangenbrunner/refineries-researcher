@@ -95,6 +95,11 @@ def ordered_columns() -> list[str]:
     return cols
 
 
+def main_stamp(main: Path) -> str:
+    """data/main_20260713_1008_ET.parquet -> '20260713_1008_ET' (the batch stamp)."""
+    return main.stem[len("main_"):]
+
+
 def latest_main() -> Path | None:
     """Most recent data/main_<stamp>.parquet, or None if the main doesn't exist yet.
     Excludes the sidecar outputs (main_<stamp>.possible.parquet / .conflicts.parquet),

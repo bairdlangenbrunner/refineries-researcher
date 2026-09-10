@@ -34,6 +34,26 @@ Typical sheets:
 - `entities` — new owners/parents needing an `entity_lookup.py` check.
 - `qa` — flags, scope-boundary questions, unresolved items.
 
+## Decision/Notes review columns (the feedback loop)
+
+Every review sheet (possible pairs, under-merge candidates, reconciliation `Possible` /
+`<source>_only` sheets) carries trailing `Decision` + `Notes` columns, blank for Baird.
+Feedback rules:
+
+- **Edit only `Decision` and `Notes`** — a wrong data value goes in `Notes`, never edited
+  in place (the workbook is a mirror, not the main).
+- **Blank `Decision` = not yet reviewed.** Partial passes are fine; hand the file back any
+  time and unresolved rows carry into the regenerated workbook.
+- **Keep the filename/stamp unchanged** so decisions map to the build they were made against.
+- Controlled `Decision` vocab (lowercase):
+  - pair/merge sheets (`PossiblePairs`, `Merge_candidates`): `merge` / `separate` / `unsure`.
+  - reconciliation `Possible` sheets: `match` / `no match` / `unsure`.
+  - reconciliation `<source>_only` sheets: `add` (genuine new refinery) / `match` (matches
+    an existing main record — name it in `Notes`) / `out` (out of scope — say why) / `unsure`.
+- Apply-back: Baird says "ingest decisions from `<file>`" → the agent parses the workbook,
+  stages the decisions as committed JSON (audit trail), rebuilds the main, and regenerates
+  fresh-stamped workbooks with decided rows dropped. Iterate until the sheets drain.
+
 ## Cell colors (per-cell source confidence)
 
 Mirrors `confidence_tiers.md`:

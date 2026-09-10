@@ -27,8 +27,8 @@ Where things live — **read on demand as the workflow dictates, not all at once
   `reconciliation.md`, `triage.md`, `qc.md`.
 - **Workflow recipes** (commands, in order): `docs/workflows.md`.
 - **Background-dataset registry**: `sources/` — one `manifest.yml` (+ optional `adapter.py`)
-  per dataset. RMI, OGJ, OGIM, and the GEM China tracker are registered. How to add one:
-  `sources/README.md`.
+  per dataset. Ten sources are registered (rmi … gem_gci; see the roster below). How to add
+  one: `sources/README.md`.
 - **Reference**: `docs/reference/` — `confidence_tiers.md`, `source_roster.md`,
   `workbook_conventions.md`; plus `docs/country_notes/`.
 - **Full project context / pending items**: `docs/PROJECT_SETUP_AND_CONTEXT.md`.
@@ -40,8 +40,10 @@ Where things live — **read on demand as the workflow dictates, not all at once
 1. **Never cite GEM as a source.** No gem.wiki, globalenergymonitor.org, or any GEM
    surface in `[ref]` columns or outputs. The China-tracker and any GEM-authored dataset
    are *seed data to reconcile*, **not** citable evidence. The goal is to surface what
-   *other*, independent sources exist. (This applies to `abarrelfull.wikidot.com` echoes of
-   GEM too — chase the primary source they footnote.)
+   *other*, independent sources exist. (`abarrelfull.wikidot.com` / `abarrelfull.co.uk` is
+   **banned outright** — never a reference, ever, even corroborated; it must not appear in
+   any output (Baird directive 2026-07-17, all GEM researcher projects). Chase the primary
+   source it footnotes.)
 2. **Never fabricate source URLs.** If a value can't be verified, describe the source
    precisely in `Notes` and mark it estimated/inferred (`EstimatedCapacity? = Yes`, etc.).
 3. **Don't defend wrong findings.** Baird challenges data points actively. Acknowledge
@@ -119,7 +121,7 @@ main. **Adding a dataset is config, not engine code** — drop a new manifest an
 `ingest.py --source <name>`.
 
 Registered sources (full detail in `docs/reference/source_roster.md`):
-- **rmi** — RMI Refinery List (Feb '23), ~800 rows worldwide. Primary global seed. Tier 2.
+- **rmi** — RMI Refinery List (Feb '23), 484 rows worldwide. Primary global seed. Tier 2.
 - **ogj** — Oil & Gas Journal Worldwide Refining survey (map JSON + PDF). Dual-unit
   capacity (kbbl/cd + Mt/a), owner, status. Tier 2 (industry-standard). **Not citable**
   (ruling, Baird 2026-07-13) — the WW Refining PDF is proprietary/paywalled → **background
@@ -157,8 +159,12 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 - **gem_gci** — GEM Global Chemicals Inventory (Nov '25 V1), worldwide, 868 operating chemical
   plants (8 tracked chemicals). GEM-authored → **seed only, NEVER a citation** (Standing Rule #1).
   A *chemicals* tracker, so most rows are out-of-scope petchem; the adapter **scope-filters** to
-  ~94 refinery candidates (feedstock = crude oil/condensate, OR a genuine refined-fuel secondary
-  product; DEF + pyrolysis-gasoline false friends stripped). Coord-bearing (one "lat, lon" cell)
+  ~115 refinery candidates via 3 branches: feedstock = crude oil/condensate; OR a genuine
+  refined-fuel secondary product; OR a **refinery name-marker** (`refiner`/`refining`, or a
+  naphtha-fed plant named `oil`) — the generalized naphtha sweep, which catches integrated
+  refinery-petchem complexes hiding under a naphtha/unknown/coal/ethane feedstock (Shell Norco,
+  Rabigh, OMV Schwechat) without admitting pure steam crackers. DEF + pyrolysis-gasoline false
+  friends stripped. Coord-bearing (one "lat, lon" cell)
   but no capacity/status/config. **RULING (Baird 2026-07-13): OVERLAY ONLY — never merged into the
   main**, same as irs_rcn; sole use is `batches/refineries_gem_gci_reconciliation_*.xlsx` — the
   gem_gci-only sheet is the payload (refineries hiding in the chemicals inventory), worked by hand.
@@ -172,7 +178,10 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
 - **Every URL passes `scripts/url_verifier.py` before going in the xlsx** — even URLs that
   worked in prior batches, even URLs inherited from RMI/OGJ. Verification means the
   specific claimed value (capacity, owner, status, year, coords) appears on that page.
-  Reject GEM URLs and `abarrelfull.wikidot.com` (chase its footnote instead).
+  Reject GEM URLs and `abarrelfull.wikidot.com`/`abarrelfull.co.uk` (banned outright, even
+  corroborated — chase its footnote instead).
+  ⛏ Only the host blocklist is implemented today — fetch/value-match is a skeleton, so
+  until it's built the value check is done manually (open the page, confirm the claim).
 - **No orphan `[ref]` cells** — never fill a `[ref]` without a paired data value, and never
   leave a researched value without a `[ref]` (except genuinely estimated values, which get
   `EstimatedCapacity? = Yes` / a Notes flag instead of a fabricated URL).
@@ -180,8 +189,10 @@ Registered sources (full detail in `docs/reference/source_roster.md`):
   `Capacity` + `CapacityUnits`. Watch the unit traps: `Mt/a` (metric tonnes/yr) ≈ 20.08
   kbpd; the Chinese `tttpa`/`万吨` unit = 10,000 t/yr (NOT 1,000). See `capacity_units.md`.
   Never convert a tonnes-based capacity without confirming which tonnes unit it is.
-- **Don't create duplicate entities** — run `scripts/entity_lookup.py` before staging a new
-  owner/parent. Entities are shared across all GEM trackers; a refiner may already exist.
+- **Don't create duplicate entities** — check new owners/parents against the shared GEM
+  entities before staging; a refiner may already exist across trackers.
+  ⛏ `scripts/entity_lookup.py` is a skeleton (blocked on an entity source) — until it's
+  built, do the check manually against the China tracker / sibling researchers' entities.
 - **Never auto-adopt a background value.** A match/reconciliation finding is a *candidate*
   for research, not an applied value. A single Tier-2 dataset never reaches "high" alone.
 - **Coordinates:** keep the source's own lat/lon + `Accuracy` (exact/approximate). When
@@ -227,10 +238,34 @@ python scripts/build_reconciliation_review.py --source irs_rcn   # match_<src> -
 python scripts/merge.py   --sources rmi,ogj,ogim,china_rmi_tracker,eia,india_ppac,brazil_anp,climate_trace --out data/main_<stamp>.parquet   # irs_rcn + gem_gci are overlay-only, never merged
 python scripts/export_main.py                 # latest main -> batches/refineries_main_<stamp>_worldwide_export.xlsx (drops RefineryID)
 python scripts/export_possible_review.py        # latest main's possible pairs -> batches/refineries_possible_review_<stamp>.xlsx
+python scripts/build_china_undermerge_review.py   # solo-teapot merge candidates -> batches/refineries_china_undermerge_<stamp>.xlsx
 python scripts/build_review_package.py --staging batches/staging/<run>/ \
-    --output batches/refineries_batch_<stamp>_<scope>_<mode>.xlsx   # <stamp>: TZ=America/New_York date "+%Y%m%d_%H%M_ET"
+    --output batches/refineries_batch_<stamp>_<scope>_<mode>.xlsx   # ⛏ SKELETON — not yet implemented (port from lng/pipelines siblings). <stamp>: TZ=America/New_York date "+%Y%m%d_%H%M_ET"
 pip install -r requirements.txt
 ```
+
+⛏ = not yet runnable: `build_review_package.py`, `entity_lookup.py`, and
+`url_verifier.py`'s fetch/value-match are skeletons (`scripts/README.md` tracks status).
+
+## Subagents and model choice (token economy)
+
+Heavy fan-out work runs via parallel subagents; the orchestrator (top-tier main loop)
+**chooses each subagent's model at dispatch time** — don't pin subagents to a fixed
+model. Concretely:
+- **Pick the cheapest model genuinely good enough for the piece of work**; when quality
+  would be equivalent, prefer the cheaper/token-efficient option. Typical delegate work:
+  per-country/per-source research sweeps, URL checking, bulk reading of source documents
+  or wide file searches, per-row candidate triage in reconciliation batches, purely
+  mechanical checks (does the page load, does a string appear, row-count comparisons) —
+  anything wide, repetitive, and independently verifiable.
+- **Keep judgment-heavy work in the top-tier main loop:** match adjudication, scope
+  rulings, conflict resolution, QC gates, escalations, merge decisions, final synthesis
+  and anything that feeds a staged value directly. Upgrade a subagent to the top tier
+  only when its task is genuinely ambiguous.
+- **Never pre-trust subagent output regardless of model** — verification gates
+  (URL checks, corroboration tiers, pre-delivery QC) run the same either way.
+- Fan out in parallel when items are independent (one agent per country/source), and
+  have each agent return structured findings, not transcripts.
 
 ## When starting a new task
 

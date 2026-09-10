@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # runnable from repo root
-from paths import SOURCES
+from paths import SOURCES, STATUS_VOCAB, CONFIGURATION_VOCAB
 from capacity_normalize import to_kbpd, UnknownUnit
 
 try:
@@ -107,7 +107,7 @@ def finalize(rows: list[dict], manifest: dict) -> "pd.DataFrame":
     name = manifest["name"]
     tier = manifest.get("source_tier")
     status_map = {k.lower(): v for k, v in (manifest.get("status_map") or {}).items()}
-    config_map = {str(k): v for k, v in (manifest.get("configuration_map") or {}).items()}
+    config_map = {str(k).lower(): v for k, v in (manifest.get("configuration_map") or {}).items()}
     default_units = manifest.get("capacity_units")
     year_sentinels = {int(y) for y in (manifest.get("start_year_sentinels") or [1900])}
     # Constant fills for a scoped source (e.g. a China-only tracker with no Country column):
@@ -126,7 +126,7 @@ def finalize(rows: list[dict], manifest: dict) -> "pd.DataFrame":
         if rec.get("status") is not None:
             rec["status"] = status_map.get(str(rec["status"]).strip().lower(), rec["status"])
         if rec.get("configuration") is not None:
-            rec["configuration"] = config_map.get(str(rec["configuration"]).strip(), rec["configuration"])
+            rec["configuration"] = config_map.get(str(rec["configuration"]).strip().lower(), rec["configuration"])
         # start_year -> integer year, sentinel-nulled
         rec["start_year"] = _to_year(rec.get("start_year"), year_sentinels)
         # capacity normalization
@@ -138,7 +138,15 @@ def finalize(rows: list[dict], manifest: dict) -> "pd.DataFrame":
             rec["capacity_kbpd"] = None
             print(f"  ! {e} (source_id={rec.get('source_id')})", file=sys.stderr)
         out.append(rec)
-    return pd.DataFrame(out, columns=CANONICAL_FIELDS)
+    df = pd.DataFrame(out, columns=CANONICAL_FIELDS)
+    # Controlled-vocab check (warn, don't reject — the value still ingests as-is so the
+    # miss is visible downstream; fix the manifest's map, not the data).
+    for col, vocab in (("status", STATUS_VOCAB), ("configuration", CONFIGURATION_VOCAB)):
+        bad = sorted({str(v) for v in df[col].dropna() if str(v) not in vocab})
+        if bad:
+            print(f"  ! out-of-vocab {col} value(s) — extend the manifest's map "
+                  f"(see controlled_vocab.md): {', '.join(bad)}", file=sys.stderr)
+    return df
 
 
 def main() -> None:
